@@ -7,13 +7,12 @@
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <style>
         @media print {
-            @page { size: A4; margin: 0mm; }
-            html, body { width: 210mm !important; margin: 0mm !important; padding: 0mm !important; }
-            body { background-color: white !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            @page { size: A4; margin: 0; }
+            html, body { margin: 0 !important; padding: 0 !important; background-color: white !important; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
             #interface-ui, #action-bar { display: none !important; }
-            .print-page { display: block !important; margin: 0mm !important; padding: 0mm !important; width: 210mm !important; height: 297mm !important; overflow: hidden !important; }
-            .print-page:not(:last-of-type) { page-break-after: always; break-after: page; }
-            #pdf-content, #elite-content { width: 210mm !important; height: 297mm !important; padding: 20mm !important; box-shadow: none !important; border: none !important; box-sizing: border-box !important; overflow: hidden !important; margin: 0mm !important; }
+            .print-page { display: block !important; margin: 0mm !important; padding: 0mm !important; width: 210mm !important; height: 297mm !important; overflow: hidden !important; page-break-after: always !important; break-after: page !important; box-sizing: border-box !important; }
+            .print-page:last-of-type { page-break-after: avoid !important; break-after: avoid !important; }
+            #pdf-content, #elite-content { width: 210mm !important; height: 297mm !important; padding: 20mm !important; box-shadow: none !important; border: none !important; box-sizing: border-box !important; overflow: hidden !important; margin: 0mm !important; background-color: white !important; position: relative !important; }
             #elite-container { margin-top: 0mm !important; }
         }
         .watermark-bg { position: absolute; top: calc(50% + 45mm); left: 50%; transform: translate(-50%, -50%); width: 75%; opacity: 0.06; pointer-events: none; z-index: 0; }
