@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dott. Valentino De Salvo - Report Analisi Completo</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         .pdf-page-render {
             width: 210mm !important;
@@ -74,6 +75,12 @@
 
     <div id="report-block-completo" class="w-full flex flex-col gap-10 items-center">
         
+        <div id="action-bar" class="hidden w-full max-w-[210mm] flex justify-center gap-4 mb-6">
+            <button id="btn-esporta" onclick="scaricaPDFClientSide()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-8 rounded-lg transition-colors flex items-center gap-2">
+                <span id="btn-text">📥 Scarica PDF Pronto</span>
+            </button>
+        </div>
+
         <div id="report-container" class="w-full max-w-[210mm] hidden preview-scroll">
             <div id="pdf-content" class="pdf-page-render border border-slate-300 shadow-sm">
                 <img src="logo_de_salvo_transparent.png" class="watermark-bg">
@@ -131,161 +138,164 @@
                 </div>
                 <div class="mt-4 text-sm font-bold text-center">
                     <p>Plicometro: GIMA DIGITALE (modello 37320)</p>
-                    <p id="elite-metodo"></p>
-                    <p>Somma pliche (mm)= <span id="elite-somma-totale">-</span></p>
+                    <p id="elite-somma-totale">-</p>
+                    <p id="elite-metodo">-</p>
                 </div>
             </div>
         </div>
-
-    </div>
-
-    <div id="action-bar" class="fixed bottom-6 left-1/2 -translate-x-1/2 flex gap-4 z-50 w-[90%] max-w-xs sm:w-auto">
-        <button id="btn-esporta" onclick="scaricaPDFServerless()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-3 rounded-full font-bold text-sm shadow-md transition-all text-center flex items-center justify-center gap-2">
-            <span id="btn-text">Scarica PDF Pronto</span>
-        </button>
     </div>
 
     <script>
+        const antropometricheLabels = {
+            M: [
+                { id: 'c-collo', label: 'Circonferenza collo (cm)' },
+                { id: 'c-torace', label: 'Circonferenza toracica (cm)' },
+                { id: 'c-vita', label: 'Circonferenza vita (cm)' },
+                { id: 'c-fianchi', label: 'Circonferenza fianchi (cm)' },
+                { id: 'c-braccio', label: 'Circonferenza braccio (cm)' },
+                { id: 'c-coscia', label: 'Circonferenza coscia (cm)' }
+            ],
+            F: [
+                { id: 'c-collo', label: 'Circonferenza collo (cm)' },
+                { id: 'c-vita', label: 'Circonferenza vita (cm)' },
+                { id: 'c-fianchi', label: 'Circonferenza fianchi (cm)' },
+                { id: 'c-gluteo', label: 'Circonferenza gluteo (cm)' },
+                { id: 'c-braccio', label: 'Circonferenza braccio (cm)' },
+                { id: 'c-coscia', label: 'Circonferenza coscia (cm)' }
+            ]
+        };
+
+        const plicheLabels = [
+            { id: 'Pettorale', label: 'Plica pettorale (mm)' },
+            { id: 'Ascellare', label: 'Plica ascellare (mm)' },
+            { id: 'Addome', label: 'Plica addome (mm)' },
+            { id: 'Soprailiaca', label: 'Plica soprailiaca (mm)' },
+            { id: 'Tricipitale', label: 'Plica tricipitale (mm)' },
+            { id: 'Sottoscapolare', label: 'Plica sottoscapolare (mm)' },
+            { id: 'Coscia', label: 'Plica coscia (mm)' }
+        ];
+
         function aggiornaInterfaccia() {
             const sesso = document.getElementById('in-sesso').value;
-            const imgPath = sesso === 'M' ? 'Siluette_Uomo.jpeg' : 'Siluette_Donna.jpeg';
-            document.getElementById('sil-l').src = encodeURI(imgPath);
-            document.getElementById('sil-r').src = encodeURI(imgPath);
-            
             const contAntro = document.getElementById('cont-antropometriche');
-            if (sesso === 'M') {
-                contAntro.innerHTML = `
-                    <input type="number" id="c-collo" placeholder="Collo (cm)" class="border p-2 rounded w-full">
-                    <input type="number" id="c-torace" placeholder="Torace (cm)" class="border p-2 rounded w-full">
-                    <input type="number" id="c-vita" placeholder="Vita (cm)" class="border p-2 rounded w-full">
-                    <input type="number" id="c-fianchi" placeholder="Fianchi (cm)" class="border p-2 rounded w-full">
-                    <input type="text" id="c-braccio" placeholder="Braccio (cm)" class="border p-2 rounded w-full">
-                    <input type="number" id="c-coscia" placeholder="Coscia (cm)" class="border p-2 rounded w-full">
-                `;
-            } else {
-                contAntro.innerHTML = `
-                    <input type="number" id="c-collo" placeholder="Collo (cm)" class="border p-2 rounded w-full">
-                    <input type="number" id="c-vita" placeholder="Vita (cm)" class="border p-2 rounded w-full">
-                    <input type="number" id="c-fianchi" placeholder="Fianchi (cm)" class="border p-2 rounded w-full">
-                    <input type="number" id="c-gluteo" placeholder="Gluteo (cm)" class="border p-2 rounded w-full">
-                    <input type="text" id="c-braccio" placeholder="Braccio (cm)" class="border p-2 rounded w-full">
-                    <input type="number" id="c-coscia" placeholder="Coscia (cm)" class="border p-2 rounded w-full">
-                `;
-            }
+            contAntro.innerHTML = antropometricheLabels[sesso].map(a => `
+                <div>
+                    <label class="block text-sm font-semibold mb-1">${a.label}</label>
+                    <input type="number" id="${a.id}" placeholder="0" step="0.1" class="border p-2 rounded w-full">
+                </div>
+            `).join('');
 
-            const container = document.getElementById('cont-pliche');
-            const lista = (sesso === 'M') 
-                ? ['Pettorale', 'Ascellare', 'Addome', 'Soprailiaca', 'Tricipitale', 'Sottoscapolare', 'Coscia'] 
-                : ['Addome', 'Soprailiaca', 'Tricipitale', 'Sottoscapolare', 'Coscia'];
-                
-            container.innerHTML = lista.map(p => `<input type="number" id="p-${p.toLowerCase()}" placeholder="${p} (mm)" step="0.1" class="border p-2 rounded w-full bg-white">`).join('');
+            const contPliche = document.getElementById('cont-pliche');
+            contPliche.innerHTML = plicheLabels.map(p => `
+                <div>
+                    <label class="block text-sm font-semibold mb-1">${p.label}</label>
+                    <input type="number" id="plica-${p.id}" placeholder="0" step="0.1" class="border p-2 rounded w-full">
+                </div>
+            `).join('');
+        }
+
+        function formatVal(id) {
+            const val = document.getElementById(id)?.value || "";
+            return val ? val.replace('.', ',') : "-";
+        }
+
+        function formatPlica(nomeId) {
+            const val = document.getElementById(`plica-${nomeId}`)?.value || "";
+            return val ? val.replace('.', ',') : "-";
         }
 
         function calcolaEGenera() {
+            const nome = document.getElementById('in-nome').value.trim();
+            const cognome = document.getElementById('in-cognome').value.trim();
             const sesso = document.getElementById('in-sesso').value;
-            const peso = parseFloat(document.getElementById('in-peso').value);
-            const altezza = parseFloat(document.getElementById('in-altezza').value);
-            const eta = parseFloat(document.getElementById('in-eta').value);
-            const laf = parseFloat(document.getElementById('in-attivita').value);
-            const cognome = (document.getElementById('in-nome').value || "").toUpperCase(); 
-            const nome = (document.getElementById('in-cognome').value || "").toUpperCase();  
-            
-            const plicheMap = {};
-            let haPliche = false;
-            document.querySelectorAll('#cont-pliche input').forEach(input => {
-                const val = parseFloat(input.value) || 0;
-                plicheMap[input.placeholder.split(' ')[0]] = val;
-                if (val > 0) haPliche = true;
-            });
+            const eta = parseFloat(document.getElementById('in-eta').value) || 0;
+            const peso = parseFloat(document.getElementById('in-peso').value) || 0;
+            const altezza = parseFloat(document.getElementById('in-altezza').value) || 0;
+            const attivita = parseFloat(document.getElementById('in-attivita').value) || 1.375;
 
-            const formatVal = (id) => {
-                const el = document.getElementById(id);
-                if (!el || !el.value) return '- ';
-                return el.value.toString().replace('.', ',') + ' ';
-            };
-
-            const formatPlica = (key) => {
-                const val = plicheMap[key];
-                if (val === undefined || val === 0) return '-';
-                return val.toString().replace('.', ',');
-            };
-
-            let sommaPliche = 0;
-            if (sesso === 'M') {
-                sommaPliche = (plicheMap['Pettorale'] || 0) + (plicheMap['Ascellare'] || 0) + (plicheMap['Addome'] || 0) + (plicheMap['Soprailiaca'] || 0) + (plicheMap['Tricipitale'] || 0) + (plicheMap['Sottoscapolare'] || 0) + (plicheMap['Coscia'] || 0);
-            } else {
-                sommaPliche = (plicheMap['Tricipitale'] || 0) + (plicheMap['Soprailiaca'] || 0) + (plicheMap['Coscia'] || 0);
+            if (!nome || !cognome || eta <= 0 || peso <= 0 || altezza <= 0) {
+                alert("Completa tutti i dati fondamentali (nome, cognome, età, peso, altezza)");
+                return;
             }
 
-            let atletaStringa = `ATLETA: ${cognome} ${nome}`.trim();
-            if (atletaStringa === "ATLETA:") atletaStringa = "ATLETA: -";
-            
+            const nomeCompleto = `${cognome} ${nome}`;
             const oggi = new Date();
-            const giorno = String(oggi.getDate()).padStart(2, '0');
-            const mese = String(oggi.getMonth() + 1).padStart(2, '0');
-            const anno = oggi.getFullYear();
-            const dataFormattata = `${giorno}-${mese}-${anno}`;
+            const dataFormattata = `${oggi.getDate().toString().padStart(2, '0')}/${(oggi.getMonth() + 1).toString().padStart(2, '0')}/${oggi.getFullYear()}`;
 
-            document.getElementById('out-nome-completo').innerText = atletaStringa;
+            document.getElementById('out-nome-completo').innerText = nomeCompleto;
             document.getElementById('out-data').innerText = dataFormattata;
-            
-            if (!isNaN(peso) && !isNaN(altezza) && !isNaN(eta)) {
-                const bmr = (sesso === 'M') ? (10 * peso) + (6.25 * altezza) - (5 * eta) + 5 : (10 * peso) + (6.25 * altezza) - (5 * eta) - 161;
-                const rmr = (sesso === 'M') ? 66.473 + (13.7516 * peso) + (5.0033 * altezza) - (6.755 * eta) : 655.0955 + (9.5634 * peso) + (1.8496 * altezza) - (4.6756 * eta);
-                
-                document.getElementById('out-bmr').innerText = Math.round(bmr) + " kcal";
-                document.getElementById('out-rmr').innerText = Math.round(rmr) + " kcal";
-                document.getElementById('out-tdee').innerText = Math.round(bmr * laf) + " kcal";
-                document.getElementById('out-tdee-sett').innerText = Math.round(bmr * laf * 7) + " kcal/sett";
-            } else {
-                document.getElementById('out-bmr').innerText = "-";
-                document.getElementById('out-rmr').innerText = "-";
-                document.getElementById('out-tdee').innerText = "-";
-                document.getElementById('out-tdee-sett').innerText = "-";
-            }
-
-            if (haPliche && !isNaN(peso) && !isNaN(eta)) {
-                let densita = (sesso === 'M') 
-                    ? 1.112 - (0.00043499 * sommaPliche) + (0.00000055 * Math.pow(sommaPliche, 2)) - (0.00028826 * eta)
-                    : 1.0994921 - (0.0009929 * sommaPliche) + (0.0000023 * Math.pow(sommaPliche, 2)) - (0.0001392 * eta);
-
-                const fm = (495 / densita) - 450;
-                const kgGrasso = (peso * fm) / 100;
-                const kgMagro = peso - kgGrasso;
-                
-                const ibwMin = (sesso === 'M') ? (kgMagro / 0.90) : (kgMagro / 0.82);
-                const ibwMax = (sesso === 'M') ? (kgMagro / 0.88) : (kgMagro / 0.78);
-
-                document.getElementById('out-gcc').innerText = densita.toFixed(4).replace('.', ',') + " g/cc";
-                document.getElementById('out-fm').innerText = fm.toFixed(2).replace('.', ',') + " %";
-                document.getElementById('out-ffm').innerText = (100 - fm).toFixed(2).replace('.', ',') + " %";
-                document.getElementById('out-ibw').innerText = Math.round(ibwMin) + " - " + Math.round(ibwMax) + " kg";
-                document.getElementById('out-kg-grasso').innerText = kgGrasso.toFixed(2).replace('.', ',') + " kg";
-                document.getElementById('out-kg-magro').innerText = kgMagro.toFixed(2).replace('.', ',') + " kg";
-                document.getElementById('out-totale-pliche').innerText = sommaPliche.toFixed(1).replace('.', ',') + " mm";
-            } else {
-                document.getElementById('out-gcc').innerText = "-";
-                document.getElementById('out-fm').innerText = "-";
-                document.getElementById('out-ffm').innerText = "-";
-                document.getElementById('out-kg-grasso').innerText = "-";
-                document.getElementById('out-kg-magro').innerText = "-";
-                document.getElementById('out-totale-pliche').innerText = haPliche ? sommaPliche.toFixed(1).replace('.', ',') + " mm" : "-";
-                
-                if (!isNaN(altezza) && altezza > 0) {
-                    const hMetri = altezza / 100;
-                    document.getElementById('out-ibw').innerText = Math.round(18.5 * hMetri * hMetri) + " - " + Math.round(24.9 * hMetri * hMetri) + " kg";
-                } else {
-                    document.getElementById('out-ibw').innerText = "-";
-                }
-            }
-            
-            document.getElementById('label-totale-pliche').innerText = (sesso === 'M') ? "Plicometria totale (7 pliche):" : "Plicometria totale (3 pliche):";
-            document.getElementById('out-peso-attuale').innerText = !isNaN(peso) ? peso.toFixed(2).replace('.', ',') + " kg" : "-";
-
-            document.getElementById('elite-sil-l').src = sesso === 'M' ? 'COMPOSIZIONE CORPOREA UOMO.JPEG' : 'COMPOSIZIONE CORPOREA DONNA.JPEG';
-            document.getElementById('elite-sil-r').src = sesso === 'M' ? 'COMPOSIZIONE CORPOREA UOMO.JPEG' : 'COMPOSIZIONE CORPOREA DONNA.JPEG';
-            document.getElementById('elite-atleta').innerText = atletaStringa;
+            document.getElementById('elite-atleta').innerText = nomeCompleto;
             document.getElementById('elite-data-2').innerText = dataFormattata;
+
+            const altezzaM = altezza / 100;
+            const bmr = sesso === 'M'
+                ? 88.362 + (13.397 * peso) + (4.799 * altezza) - (5.677 * eta)
+                : 447.593 + (9.247 * peso) + (3.098 * altezza) - (4.330 * eta);
+
+            const rmr = bmr * 0.95;
+            const tdee = rmr * attivita;
+            const tdeeSettimanale = tdee * 7;
+
+            document.getElementById('out-bmr').innerText = bmr.toFixed(2).replace('.', ',');
+            document.getElementById('out-rmr').innerText = rmr.toFixed(2).replace('.', ',');
+            document.getElementById('out-tdee').innerText = tdee.toFixed(2).replace('.', ',');
+            document.getElementById('out-tdee-sett').innerText = tdeeSettimanale.toFixed(2).replace('.', ',');
+
+            const valoriPliche = plicheLabels.map(p => parseFloat(document.getElementById(`plica-${p.id}`)?.value) || 0);
+            const sommaPliche = valoriPliche.reduce((a, b) => a + b, 0);
+            const haPliche = sommaPliche > 0;
+
+            let gcc, fm, ffm, ibwMin, ibwMax, kgGrasso, kgMagro;
+
+            if (haPliche) {
+                if (sesso === 'M') {
+                    const bd = 1.109380 - (0.0008267 * sommaPliche) + (0.0000016 * sommaPliche * sommaPliche);
+                    gcc = bd;
+                    fm = ((4.95 / bd) - 4.5) * peso;
+                    ffm = peso - fm;
+                    kgGrasso = fm.toFixed(2);
+                    kgMagro = ffm.toFixed(2);
+                    ibwMin = (altezza - 100) * 0.9;
+                    ibwMax = (altezza - 100) * 1.1;
+                } else {
+                    const bd = 1.0994921 - (0.0009929 * sommaPliche) + (0.0000023 * sommaPliche * sommaPliche);
+                    gcc = bd;
+                    fm = ((4.95 / bd) - 4.5) * peso;
+                    ffm = peso - fm;
+                    kgGrasso = fm.toFixed(2);
+                    kgMagro = ffm.toFixed(2);
+                    ibwMin = (altezza - 100) * 0.85;
+                    ibwMax = (altezza - 100) * 1.05;
+                }
+            } else {
+                gcc = "-";
+                fm = peso * (sesso === 'M' ? 0.15 : 0.25);
+                ffm = peso - fm;
+                kgGrasso = fm.toFixed(2);
+                kgMagro = ffm.toFixed(2);
+                ibwMin = (altezza - 100) * 0.9;
+                ibwMax = (altezza - 100) * 1.1;
+            }
+
+            document.getElementById('out-gcc').innerText = gcc === "-" ? "-" : gcc.toFixed(4).replace('.', ',');
+            document.getElementById('out-fm').innerText = fm.toFixed(2).replace('.', ',');
+            document.getElementById('out-ffm').innerText = ffm.toFixed(2).replace('.', ',');
+            document.getElementById('out-ibw').innerText = `${ibwMin.toFixed(2).replace('.', ',')} - ${ibwMax.toFixed(2).replace('.', ',')}`;
+            document.getElementById('out-kg-grasso').innerText = kgGrasso.replace('.', ',');
+            document.getElementById('out-kg-magro').innerText = kgMagro.replace('.', ',');
+            document.getElementById('out-peso-attuale').innerText = peso.toString().replace('.', ',');
+
+            document.getElementById('out-totale-pliche').innerText = haPliche ? sommaPliche.toFixed(2).replace('.', ',') + " mm" : "-";
+            document.getElementById('label-totale-pliche').innerText = haPliche ? "Plicometria totale" : "Plicometria totale (non fornita)";
+
+            const silhouetteImg = sesso === 'M' ? 'Siluette_Uomo.jpeg' : 'Siluette_Donna.jpeg';
+            const composizioneImg = sesso === 'M' ? 'COMPOSIZIONE CORPOREA UOMO.JPEG' : 'COMPOSIZIONE CORPOREA DONNA.JPEG';
+
+            document.getElementById('sil-l').src = silhouetteImg;
+            document.getElementById('sil-r').src = silhouetteImg;
+            document.getElementById('elite-sil-l').src = composizioneImg;
+            document.getElementById('elite-sil-r').src = composizioneImg;
+
             document.getElementById('elite-somma-totale').innerText = haPliche ? sommaPliche.toFixed(2).replace('.', ',') + " mm" : "-";
             document.getElementById('elite-metodo').innerText = sesso === 'M' ? 'Metodo: Jackson & Pollock / 7 pliche' : 'Metodo: Jackson & Pollock / 3 pliche';
 
@@ -332,13 +342,14 @@
 
             document.getElementById('report-container').classList.remove('hidden');
             document.getElementById('elite-container').classList.remove('hidden');
+            document.getElementById('action-bar').classList.remove('hidden');
             
             if (window.location.search.indexOf('renderServer') === -1) {
                 document.getElementById('report-container').scrollIntoView({ behavior: 'smooth' });
             }
         }
 
-        function scaricaPDFServerless() {
+        function scaricaPDFClientSide() {
             if (document.getElementById('report-container').classList.contains('hidden')) {
                 alert("Genera prima il report inserendo i dati del paziente.");
                 return;
@@ -348,71 +359,43 @@
             const btnText = document.getElementById('btn-text');
             btn.disabled = true;
             btn.classList.replace('bg-emerald-600', 'bg-slate-400');
-            btnText.innerText = "Compilazione Server...";
-
-            const dati = { inputs: {}, antro: {}, pliche: {} };
-
-            ['in-nome', 'in-cognome', 'in-sesso', 'in-eta', 'in-peso', 'in-altezza', 'in-attivita'].forEach(id => {
-                dati.inputs[id] = document.getElementById(id).value;
-            });
-            document.querySelectorAll('#cont-antropometriche input').forEach(input => {
-                dati.antro[input.id] = input.value;
-            });
-            document.querySelectorAll('#cont-pliche input').forEach(input => {
-                dati.pliche[input.id] = input.value;
-            });
-
-            const dataStr = document.getElementById('out-data').innerText || "";
-            const nomeFile = "Composizione corporea e Fabbisogni energetici " + dataStr + ".pdf";
-
-            const jsonStr = JSON.stringify(dati);
-            const base64Data = btoa(unescape(encodeURIComponent(jsonStr)));
-
-            window.location.href = `/.netlify/functions/generate-pdf?data=${encodeURIComponent(base64Data)}&filename=${encodeURIComponent(nomeFile)}`;
+            btnText.innerText = "⏳ Generazione PDF...";
 
             setTimeout(() => {
-                btn.disabled = false;
-                btn.classList.replace('bg-slate-400', 'bg-emerald-600');
-                btnText.innerText = "Scarica PDF Pronto";
-            }, 5000);
+                try {
+                    const dataStr = document.getElementById('out-data').innerText || "";
+                    const nomeFile = "Composizione corporea e Fabbisogni energetici " + dataStr;
+
+                    const element1 = document.getElementById('pdf-content');
+                    const element2 = document.getElementById('elite-content');
+
+                    const opt = {
+                        margin: 0,
+                        filename: nomeFile + '.pdf',
+                        image: { type: 'jpeg', quality: 0.98 },
+                        html2canvas: { scale: 2, useCORS: true, allowTaint: true, backgroundColor: '#ffffff' },
+                        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+                    };
+
+                    html2pdf().set(opt).addElement(element1).addPage().addElement(element2).save();
+
+                    setTimeout(() => {
+                        btn.disabled = false;
+                        btn.classList.replace('bg-slate-400', 'bg-emerald-600');
+                        btnText.innerText = "📥 Scarica PDF Pronto";
+                    }, 1000);
+                } catch (error) {
+                    console.error("Errore nella generazione del PDF:", error);
+                    alert("Errore nella generazione del PDF. Riprova.");
+                    btn.disabled = false;
+                    btn.classList.replace('bg-slate-400', 'bg-emerald-600');
+                    btnText.innerText = "📥 Scarica PDF Pronto";
+                }
+            }, 500);
         }
 
         window.addEventListener('DOMContentLoaded', () => {
-            const urlParams = new URLSearchParams(window.location.search);
-            if (urlParams.get('renderServer') === 'true') {
-                document.getElementById('interface-ui').style.display = 'none';
-                document.getElementById('action-bar').style.display = 'none';
-                document.body.className = "bg-white p-0 m-0";
-
-                try {
-                    let base64Data = urlParams.get('pdf_data');
-                    if (base64Data) {
-                        // Controllo di sanitizzazione fondamentale: corregge eventuali spazi inseriti dai parser URL nel Base64
-                        base64Data = base64Data.replace(/ /g, '+');
-                        const jsonStr = decodeURIComponent(escape(atob(base64Data)));
-                        const dati = JSON.parse(jsonStr);
-
-                        Object.keys(dati.inputs).forEach(id => {
-                            if (document.getElementById(id)) document.getElementById(id).value = dati.inputs[id];
-                        });
-                        
-                        aggiornaInterfaccia();
-
-                        Object.keys(dati.antro).forEach(id => {
-                            if (document.getElementById(id)) document.getElementById(id).value = dati.antro[id];
-                        });
-                        Object.keys(dati.pliche).forEach(id => {
-                            if (document.getElementById(id)) document.getElementById(id).value = dati.pliche[id];
-                        });
-
-                        calcolaEGenera();
-                    }
-                } catch (e) {
-                    console.error("Errore di decodifica serverside:", e);
-                }
-            } else {
-                aggiornaInterfaccia();
-            }
+            aggiornaInterfaccia();
         });
     </script>
 </body>
