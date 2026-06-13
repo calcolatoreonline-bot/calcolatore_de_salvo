@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>Test Isolato html2pdf - Fix Pagina Bianca</title>
+    <title>Test Isolato html2pdf - Soluzione Flash</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         .pagina-a4 {
@@ -20,7 +20,7 @@
 
     <div style="margin-bottom: 20px; text-align: center;">
         <button id="btn-esporta" onclick="scaricaPDFClientSide()" style="padding: 10px 20px; font-size: 16px; background-color: #059669; color: white; border: none; border-radius: 5px; cursor: pointer;">
-            📥 Clicca qui per testare il PDF (Fix Opacità)
+            📥 Clicca qui per testare il PDF (Flash Visivo)
         </button>
     </div>
 
@@ -52,16 +52,11 @@
             btn.innerText = "⏳ Generazione PDF...";
 
             try {
-                // 1. Creiamo il wrapper con la nuova strategia di invisibilità (Rimane nel viewport ma opaco a 0)
+                // 1. Creiamo il wrapper COMPOSTO E VISIBILE al 100%
                 const tempWrapper = document.createElement('div');
-                tempWrapper.style.position = 'fixed';
-                tempWrapper.style.top = '0';
-                tempWrapper.style.left = '0';
+                // Lo teniamo bloccato in fondo alla pagina per ridurre l'impatto visivo
+                tempWrapper.style.position = 'relative';
                 tempWrapper.style.width = '210mm';
-                tempWrapper.style.height = '100%';
-                tempWrapper.style.zIndex = '-9999';
-                tempWrapper.style.opacity = '0';
-                tempWrapper.style.pointerEvents = 'none';
                 tempWrapper.style.backgroundColor = '#ffffff';
                 
                 const page1 = document.getElementById('pdf-content').cloneNode(true);
@@ -74,29 +69,29 @@
                 tempWrapper.appendChild(pageBreak);
                 tempWrapper.appendChild(page2);
 
-                // Appeso fisicamente al DOM per forzarne il rendering grafico completo
+                // 2. Lo appendiamo visibile: il browser DEVE calcolare i colori e i testi
                 document.body.appendChild(tempWrapper);
 
                 const opt = {
                     margin: 0,
-                    filename: 'test-due-pagine-colore.pdf',
+                    filename: 'test-flash-successo.pdf',
                     image: { type: 'jpeg', quality: 0.98 },
                     html2canvas: { 
                         scale: 2, 
                         useCORS: true, 
-                        allowTaint: false, // Disattiviamo taint per evitare blocchi di sicurezza Canvas stringenti
+                        allowTaint: true,
                         backgroundColor: '#ffffff',
-                        logging: true // Attiviamo i log interni di html2canvas per vedere cosa fa
+                        logging: false
                     },
                     jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
                     pagebreak: { mode: 'css' }
                 };
 
-                // Avviamo il motore
+                // 3. Il motore fotografa e poi distruggiamo subito il wrapper
                 html2pdf().set(opt).from(tempWrapper).save().then(() => {
                     document.body.removeChild(tempWrapper);
                     btn.disabled = false;
-                    btn.innerText = "📥 Clicca qui per testare il PDF (Fix Opacità)";
+                    btn.innerText = "📥 Clicca qui per testare il PDF (Flash Visivo)";
                     console.log("PDF generato con successo!");
                 }).catch(err => {
                     console.error("Errore durante il salvataggio:", err);
