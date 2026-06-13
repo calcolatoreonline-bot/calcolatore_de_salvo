@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>Test Isolato html2pdf</title>
+    <!-- Importiamo la libreria -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        .pagina-a4 {
+            width: 210mm;
+            height: 297mm;
+            padding: 20mm;
+            background-color: white;
+            border: 1px solid #ccc;
+            margin-bottom: 20px;
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+<body style="background-color: #f0f0f0; font-family: sans-serif; padding: 20px;">
+
+    <div style="margin-bottom: 20px; text-align: center;">
+        <button id="btn-esporta" onclick="scaricaPDFClientSide()" style="padding: 10px 20px; font-size: 16px; background-color: #059669; color: white; border: none; border-radius: 5px; cursor: pointer;">
+            📥 Clicca qui per testare il PDF
+        </button>
+    </div>
+
+    <!-- PAGINA 1 DI TEST -->
+    <div id="pdf-content" class="pagina-a4">
+        <h1>PRIMA PAGINA</h1>
+        <p>Questo è un testo di test per la pagina 1.</p>
+        <!-- Inseriamo un'immagine reale per vedere se blocca il rendering -->
+        <img src="logo_de_salvo_transparent.png" style="width: 150px; margin-top: 20px;" alt="[Logo Test]">
+    </div>
+
+    <!-- PAGINA 2 DI TEST -->
+    <div id="elite-content" class="pagina-a4">
+        <h1>SECONDA PAGINA (ELITE)</h1>
+        <p>Questo è un testo di test per la pagina 2.</p>
+        <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+            <tr>
+                <th style="border: 1px solid black; padding: 8px;">Parametro</th>
+                <th style="border: 1px solid black; padding: 8px;">Valore</th>
+            </tr>
+            <tr>
+                <td style="border: 1px solid black; padding: 8px;">Peso</td>
+                <td style="border: 1px solid black; padding: 8px;">70 Kg</td>
+            </tr>
+        </table>
+    </div>
+
+    <script>
+        function scaricaPDFClientSide() {
+            const btn = document.getElementById('btn-esporta');
+            btn.disabled = true;
+            btn.innerText = "⏳ Generazione PDF...";
+
+            try {
+                const tempWrapper = document.createElement('div');
+                tempWrapper.style.position = 'absolute';
+                tempWrapper.style.left = '-9999px';
+                tempWrapper.style.top = '0';
+                
+                const page1 = document.getElementById('pdf-content').cloneNode(true);
+                const page2 = document.getElementById('elite-content').cloneNode(true);
+                
+                const pageBreak = document.createElement('div');
+                pageBreak.className = 'html2pdf__page-break';
+
+                tempWrapper.appendChild(page1);
+                tempWrapper.appendChild(pageBreak);
+                tempWrapper.appendChild(page2);
+
+                // Appeso al DOM per sbloccare html2canvas
+                document.body.appendChild(tempWrapper);
+
+                const opt = {
+                    margin: 0,
+                    filename: 'test-due-pagine.pdf',
+                    image: { type: 'jpeg', quality: 0.98 },
+                    html2canvas: { 
+                        scale: 2, 
+                        useCORS: true, 
+                        allowTaint: true, 
+                        backgroundColor: '#ffffff'
+                    },
+                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                    pagebreak: { mode: 'css' }
+                };
+
+                html2pdf().set(opt).from(tempWrapper).save().then(() => {
+                    document.body.removeChild(tempWrapper);
+                    btn.disabled = false;
+                    btn.innerText = "📥 Clicca qui per testare il PDF";
+                    console.log("PDF generato con successo!");
+                }).catch(err => {
+                    console.error("Errore durante il salvataggio:", err);
+                    if (document.body.contains(tempWrapper)) document.body.removeChild(tempWrapper);
+                    btn.disabled = false;
+                    btn.innerText = "❌ Errore (Vedi Console)";
+                });
+
+            } catch (error) {
+                console.error("Errore generico:", error);
+                btn.disabled = false;
+                btn.innerText = "❌ Errore Generico";
+            }
+        }
+    </script>
+</body>
+</html>
