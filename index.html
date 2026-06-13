@@ -5,7 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dott. Valentino De Salvo - Report Analisi Completo</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         .pdf-page-render {
             width: 210mm !important;
@@ -349,7 +350,7 @@
             }
         }
 
-        function scaricaPDFClientSide() {
+        async function scaricaPDFClientSide() {
             if (document.getElementById('report-container').classList.contains('hidden')) {
                 alert("Genera prima il report inserendo i dati del paziente.");
                 return;
@@ -361,37 +362,54 @@
             btn.classList.replace('bg-emerald-600', 'bg-slate-400');
             btnText.innerText = "⏳ Generazione PDF...";
 
-            setTimeout(() => {
-                try {
-                    const dataStr = document.getElementById('out-data').innerText || "";
-                    const nomeFile = "Composizione corporea e Fabbisogni energetici " + dataStr;
+            try {
+                const { jsPDF } = window.jspdf;
+                const dataStr = document.getElementById('out-data').innerText || "";
+                const nomeFile = "Composizione corporea e Fabbisogni energetici " + dataStr;
 
-                    const element1 = document.getElementById('pdf-content');
-                    const element2 = document.getElementById('elite-content');
+                const element1 = document.getElementById('pdf-content');
+                const element2 = document.getElementById('elite-content');
 
-                    const opt = {
-                        margin: 0,
-                        filename: nomeFile + '.pdf',
-                        image: { type: 'jpeg', quality: 0.98 },
-                        html2canvas: { scale: 2, useCORS: true, allowTaint: true, backgroundColor: '#ffffff' },
-                        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-                    };
+                // Crea PDF
+                const pdf = new jsPDF('p', 'mm', 'a4');
+                
+                // Prima pagina
+                const canvas1 = await html2canvas(element1, {
+                    scale: 2,
+                    useCORS: true,
+                    allowTaint: true,
+                    backgroundColor: '#ffffff'
+                });
+                const imgData1 = canvas1.toDataURL('image/jpeg', 0.98);
+                const imgWidth = 210;
+                const imgHeight = (canvas1.height * imgWidth) / canvas1.width;
+                pdf.addImage(imgData1, 'JPEG', 0, 0, imgWidth, imgHeight);
 
-                    html2pdf().set(opt).addElement(element1).addPage().addElement(element2).save();
+                // Seconda pagina
+                pdf.addPage('a4');
+                const canvas2 = await html2canvas(element2, {
+                    scale: 2,
+                    useCORS: true,
+                    allowTaint: true,
+                    backgroundColor: '#ffffff'
+                });
+                const imgData2 = canvas2.toDataURL('image/jpeg', 0.98);
+                const imgHeight2 = (canvas2.height * imgWidth) / canvas2.width;
+                pdf.addImage(imgData2, 'JPEG', 0, 0, imgWidth, imgHeight2);
 
-                    setTimeout(() => {
-                        btn.disabled = false;
-                        btn.classList.replace('bg-slate-400', 'bg-emerald-600');
-                        btnText.innerText = "📥 Scarica PDF Pronto";
-                    }, 1000);
-                } catch (error) {
-                    console.error("Errore nella generazione del PDF:", error);
-                    alert("Errore nella generazione del PDF. Riprova.");
-                    btn.disabled = false;
-                    btn.classList.replace('bg-slate-400', 'bg-emerald-600');
-                    btnText.innerText = "📥 Scarica PDF Pronto";
-                }
-            }, 500);
+                // Salva il PDF
+                pdf.save(nomeFile + '.pdf');
+
+                btn.disabled = false;
+                btn.classList.replace('bg-slate-400', 'bg-emerald-600');
+                btnText.innerText = "📥 Scarica PDF Pronto";
+            } catch (error) {
+                console.error("Errore nella generazione del PDF:", error);
+                alert("Errore nella generazione del PDF. Riprova. Dettagli: " + error.message);
+                btn.disabled = false;
+                btn.classList.replace('bg-slate-400', 'bg-emerald-600');
+                btnText.innerText = "📥 Scarica PDF Pronto";
+            }
         }
 
         window.addEventListener('DOMContentLoaded', () => {
