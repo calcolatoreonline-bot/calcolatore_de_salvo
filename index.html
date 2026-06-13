@@ -43,6 +43,41 @@
             border: 1px solid #cbd5e1;
             box-shadow: 0 1px 2px rgba(0,0,0,0.05);
         }
+
+        /* Override colori Tailwind per html2canvas */
+        #pdf-content h2, #elite-content h2 {
+            background-color: #2563eb !important;
+            color: white !important;
+        }
+
+        #pdf-content h1, #elite-content h1 {
+            background-color: #fbbf24 !important;
+            color: black !important;
+        }
+
+        #pdf-content .flex, #elite-content .flex {
+            display: flex !important;
+        }
+
+        #pdf-content .text-center, #elite-content .text-center {
+            text-align: center !important;
+        }
+
+        #pdf-content .text-right, #elite-content .text-right {
+            text-align: right !important;
+        }
+
+        #pdf-content .font-bold, #elite-content .font-bold {
+            font-weight: bold !important;
+        }
+
+        #pdf-content .relative, #elite-content .relative {
+            position: relative !important;
+        }
+
+        #pdf-content .absolute, #elite-content .absolute {
+            position: absolute !important;
+        }
     </style>
 </head>
 <body class="bg-slate-100 p-4 md:p-8">
@@ -383,7 +418,18 @@
                     scale: 2,
                     useCORS: true,
                     allowTaint: true,
-                    backgroundColor: '#ffffff'
+                    backgroundColor: '#ffffff',
+                    logging: false,
+                    onclone: function(clonedDocument) {
+                        // Rimuovi gli stili problematici prima della conversione
+                        const style = clonedDocument.createElement('style');
+                        style.innerHTML = `
+                            * { color: #000000 !important; }
+                            h2 { background-color: #2563eb !important; color: white !important; }
+                            h1 { background-color: #fbbf24 !important; color: black !important; }
+                        `;
+                        clonedDocument.head.appendChild(style);
+                    }
                 });
                 const imgData1 = canvas1.toDataURL('image/jpeg', 0.98);
                 const imgWidth = 210;
@@ -396,7 +442,18 @@
                     scale: 2,
                     useCORS: true,
                     allowTaint: true,
-                    backgroundColor: '#ffffff'
+                    backgroundColor: '#ffffff',
+                    logging: false,
+                    onclone: function(clonedDocument) {
+                        // Rimuovi gli stili problematici prima della conversione
+                        const style = clonedDocument.createElement('style');
+                        style.innerHTML = `
+                            * { color: #000000 !important; }
+                            h2 { background-color: #2563eb !important; color: white !important; }
+                            h1 { background-color: #fbbf24 !important; color: black !important; }
+                        `;
+                        clonedDocument.head.appendChild(style);
+                    }
                 });
                 const imgData2 = canvas2.toDataURL('image/jpeg', 0.98);
                 const imgHeight2 = (canvas2.height * imgWidth) / canvas2.width;
