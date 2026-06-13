@@ -2,8 +2,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>Test Isolato html2pdf</title>
-    <!-- Importiamo la libreria -->
+    <title>Test Isolato html2pdf - Fix Pagina Bianca</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         .pagina-a4 {
@@ -21,19 +20,16 @@
 
     <div style="margin-bottom: 20px; text-align: center;">
         <button id="btn-esporta" onclick="scaricaPDFClientSide()" style="padding: 10px 20px; font-size: 16px; background-color: #059669; color: white; border: none; border-radius: 5px; cursor: pointer;">
-            📥 Clicca qui per testare il PDF
+            📥 Clicca qui per testare il PDF (Fix Opacità)
         </button>
     </div>
 
-    <!-- PAGINA 1 DI TEST -->
     <div id="pdf-content" class="pagina-a4">
         <h1>PRIMA PAGINA</h1>
         <p>Questo è un testo di test per la pagina 1.</p>
-        <!-- Inseriamo un'immagine reale per vedere se blocca il rendering -->
         <img src="logo_de_salvo_transparent.png" style="width: 150px; margin-top: 20px;" alt="[Logo Test]">
     </div>
 
-    <!-- PAGINA 2 DI TEST -->
     <div id="elite-content" class="pagina-a4">
         <h1>SECONDA PAGINA (ELITE)</h1>
         <p>Questo è un testo di test per la pagina 2.</p>
@@ -56,10 +52,17 @@
             btn.innerText = "⏳ Generazione PDF...";
 
             try {
+                // 1. Creiamo il wrapper con la nuova strategia di invisibilità (Rimane nel viewport ma opaco a 0)
                 const tempWrapper = document.createElement('div');
-                tempWrapper.style.position = 'absolute';
-                tempWrapper.style.left = '-9999px';
+                tempWrapper.style.position = 'fixed';
                 tempWrapper.style.top = '0';
+                tempWrapper.style.left = '0';
+                tempWrapper.style.width = '210mm';
+                tempWrapper.style.height = '100%';
+                tempWrapper.style.zIndex = '-9999';
+                tempWrapper.style.opacity = '0';
+                tempWrapper.style.pointerEvents = 'none';
+                tempWrapper.style.backgroundColor = '#ffffff';
                 
                 const page1 = document.getElementById('pdf-content').cloneNode(true);
                 const page2 = document.getElementById('elite-content').cloneNode(true);
@@ -71,27 +74,29 @@
                 tempWrapper.appendChild(pageBreak);
                 tempWrapper.appendChild(page2);
 
-                // Appeso al DOM per sbloccare html2canvas
+                // Appeso fisicamente al DOM per forzarne il rendering grafico completo
                 document.body.appendChild(tempWrapper);
 
                 const opt = {
                     margin: 0,
-                    filename: 'test-due-pagine.pdf',
+                    filename: 'test-due-pagine-colore.pdf',
                     image: { type: 'jpeg', quality: 0.98 },
                     html2canvas: { 
                         scale: 2, 
                         useCORS: true, 
-                        allowTaint: true, 
-                        backgroundColor: '#ffffff'
+                        allowTaint: false, // Disattiviamo taint per evitare blocchi di sicurezza Canvas stringenti
+                        backgroundColor: '#ffffff',
+                        logging: true // Attiviamo i log interni di html2canvas per vedere cosa fa
                     },
                     jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
                     pagebreak: { mode: 'css' }
                 };
 
+                // Avviamo il motore
                 html2pdf().set(opt).from(tempWrapper).save().then(() => {
                     document.body.removeChild(tempWrapper);
                     btn.disabled = false;
-                    btn.innerText = "📥 Clicca qui per testare il PDF";
+                    btn.innerText = "📥 Clicca qui per testare il PDF (Fix Opacità)";
                     console.log("PDF generato con successo!");
                 }).catch(err => {
                     console.error("Errore durante il salvataggio:", err);
