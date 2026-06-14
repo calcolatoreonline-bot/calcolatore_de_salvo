@@ -5,9 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dott. Valentino De Salvo - Report Analisi Completo</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
-        /* Semplici anteprime di visualizzazione locale prima del download */
+        /* Anteprime di visualizzazione locale prima del download */
         @media screen {
             .pdf-page-preview {
                 width: 210mm;
@@ -363,23 +362,26 @@
                 const b64Silhouette = await convertiInBase64(silhouettePath);
                 const b64SilhouetteElite = await convertiInBase64(silhouetteElitePath);
 
-                const vecchioIframe = document.getElementById('pdf-iframe-worker');
-                if (vecchioIframe) vecchioIframe.remove();
+                // Recuperiamo la struttura HTML del template esterno tramite fetch
+                const response = await fetch('report-template.html');
+                let templateHtml = await response.text();
 
-                const iframe = document.createElement('iframe');
-                iframe.id = 'pdf-iframe-worker';
-                iframe.src = 'report-template.html'; 
-                iframe.style.position = 'absolute';
-                iframe.style.width = '1024px'; 
-                iframe.style.height = '768px';
-                iframe.style.opacity = '0';
-                iframe.style.pointerEvents = 'none';
-                document.body.appendChild(iframe);
+                // Apriamo una nuova finestra temporanea priva di relazioni CSS con il foglio corrente
+                const printWindow = window.open('', '_blank', 'width=1100,height=900');
+                printWindow.document.open();
+                printWindow.document.write(templateHtml);
+                printWindow.document.close();
 
-                iframe.onload = function() {
-                    const doc = iframe.contentDocument || iframe.contentWindow.document;
+                // Aspettiamo che il DOM della nuova finestra sia pronto
+                const doc = printWindow.document;
+                
+                // Carichiamo la libreria html2pdf direttamente dentro la nuova finestra isolata
+                const script = doc.createElement('script');
+                script.src = "https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js";
+                doc.head.appendChild(script);
 
-                    // INIEZIONE DEI DATI
+                script.onload = function() {
+                    // INIEZIONE DEI DATI DENTRO I RIGIDI CAMPI DEL NUOVO DOCUMENTO VERGINE
                     doc.getElementById('pdf-watermark-1').src = b64Watermark;
                     doc.getElementById('pdf-watermark-2').src = b64Watermark;
                     doc.getElementById('pdf-logo-1').src = b64Watermark;
@@ -412,9 +414,9 @@
                     doc.getElementById('pdf-metodo').innerText = reportDataStore.sesso === 'M' ? 'Metodo: Jackson & Pollock / 7 pliche' : 'Metodo: Jackson & Pollock / 3 pliche';
                     doc.getElementById('pdf-somma-totale').innerText = reportDataStore.haPliche ? reportDataStore.sommaPliche.toFixed(2).replace('.', ',') : '-';
 
-                    doc.body.offsetHeight; 
+                    // Forza l'aggiornamento grafico strutturale
+                    doc.body.offsetHeight;
 
-                    // CHIAMATA MASTER: html2pdf() principale focalizzato solo sul documento interno
                     const nomeFile = "Composizione corporea e Fabbisogni energetici " + reportDataStore.dataFormattata;
                     const opt = {
                         margin: 0,
@@ -424,24 +426,24 @@
                             scale: 2, 
                             useCORS: true, 
                             backgroundColor: '#ffffff', 
-                            logging: false,
-                            container: doc.body // Obbliga l'esecutore a scansionare unicamente le regole interne dell'iframe
+                            logging: false
                         },
                         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
                         pagebreak: { mode: ['css', 'legacy'] }
                     };
 
-                    // Esecuzione fluida gestita dal file master
-                    window.html2pdf().set(opt).from(doc.body).save().then(() => {
+                    // Esecuzione fluida nel contesto isolato della nuova finestra
+                    printWindow.html2pdf().set(opt).from(doc.body).save().then(() => {
                         btn.disabled = false;
                         btn.classList.replace('bg-slate-400', 'bg-emerald-600');
                         btnText.innerText = "📥 Scarica PDF Pronto";
-                        iframe.remove(); 
+                        printWindow.close(); // Chiude istantaneamente la scheda di rendering
                     }).catch(err => {
                         console.error("Errore esportazione html2pdf:", err);
                         btn.disabled = false;
                         btn.classList.replace('bg-slate-400', 'bg-emerald-600');
                         btnText.innerText = "📥 Scarica PDF Pronto";
+                        printWindow.close();
                     });
                 };
 
