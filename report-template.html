@@ -14,15 +14,6 @@
             overflow: hidden;
             background-color: #ffffff;
         }
-        .watermark {
-            position: absolute;
-            top: calc(50% + 45mm);
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 75%;
-            opacity: 0.06;
-            z-index: 0;
-        }
         .header-row { display: table; width: 100%; height: 160px; margin-bottom: 16px; position: relative; z-index: 10; }
         .header-cell { display: table-cell; vertical-align: middle; }
         .title-p1 {
@@ -33,8 +24,8 @@
             font-size: 24px;
             padding: 12px 0;
             text-transform: uppercase;
-            margin-top: 25mm;
-            margin-bottom: 24px;
+            margin-top: 8mm;
+            margin-bottom: 0;
         }
         .title-p2 {
             background-color: #facc15;
@@ -47,17 +38,47 @@
             text-transform: uppercase;
             margin-bottom: 4px;
         }
-        .word-table { border-collapse: collapse; width: 100%; z-index: 10; position: relative; margin-top: 20px; }
+        .word-table { border-collapse: collapse; width: 100%; z-index: 10; position: relative; }
         .word-table th, .word-table td { border: 1px solid #000000; padding: 6px 12px; font-size: 13px; }
         .word-table th { background-color: #f2f2f2; font-weight: bold; }
         .text-right { text-align: right; }
         .text-center { text-align: center; }
+
+        /* Wrapper relativo per posizionare watermark dentro la tabella */
+        .table-wrapper {
+            position: relative;
+            margin-top: 0;
+        }
+        .watermark-in-table {
+            position: absolute;
+            /* centro orizzontale */
+            left: 50%;
+            transform: translateX(-50%);
+            /* larghezza calibrata per stare dentro la tabella */
+            width: 62%;
+            opacity: 0.06;
+            z-index: 0;
+            /* top calibrato: la punta della A deve essere 1mm sotto il bordo superiore della tabella */
+            /* il logo ha proporzione circa 1:1, width=62% di 170mm (larghezza contenuto) ≈ 105mm */
+            /* vogliamo che il TOP dell'immagine inizi 1mm dal top della tabella */
+            top: 1mm;
+            pointer-events: none;
+        }
+        .watermark-in-table-p2 {
+            position: absolute;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 58%;
+            opacity: 0.06;
+            z-index: 0;
+            top: 2mm;
+            pointer-events: none;
+        }
     </style>
 </head>
 <body>
 
     <div class="page-a4">
-        <img id="pdf-watermark-1" class="watermark">
         <div class="header-row">
             <div class="header-cell" style="width: 192px;"><img id="pdf-sil-l" style="height: 240px; width: auto;"></div>
             <div class="header-cell text-center">
@@ -72,25 +93,28 @@
         
         <div class="title-p1">Fabbisogni Energetici</div>
         
-        <table class="word-table">
-            <thead>
-                <tr><th>Parametro</th><th class="text-right">Valore</th></tr>
-            </thead>
-            <tbody>
-                <tr><td>BMR (Metabolismo Basale)</td><td class="text-right" id="pdf-bmr">-</td></tr>
-                <tr><td>RMR (Metabolismo a Riposo)</td><td class="text-right" id="pdf-rmr">-</td></tr>
-                <tr><td>TDEE (Giornaliero)</td><td class="text-right" id="pdf-tdee">-</td></tr>
-                <tr><td>TDEE Settimanale</td><td class="text-right" id="pdf-tdee-sett">-</td></tr>
-                <tr><td>G/CC (Densità)</td><td class="text-right" id="pdf-gcc">-</td></tr>
-                <tr><td>Massa Grassa (FM)</td><td class="text-right" id="pdf-fm">-</td></tr>
-                <tr><td>Massa Magra (FFM)</td><td class="text-right" id="pdf-ffm">-</td></tr>
-                <tr><td>Peso Ideale (Range)</td><td class="text-right" id="pdf-ibw">-</td></tr>
-                <tr><td>Kg Grasso Corporeo</td><td class="text-right" id="pdf-kg-grasso">-</td></tr>
-                <tr><td>Kg Massa Magra</td><td class="text-right" id="pdf-kg-magro">-</td></tr>
-                <tr><td id="pdf-label-pliche">Plicometria totale</td><td class="text-right" id="pdf-totale-pliche">-</td></tr>
-                <tr><td>Peso Corporeo Attuale</td><td class="text-right" id="pdf-peso-attuale">-</td></tr>
-            </tbody>
-        </table>
+        <div class="table-wrapper">
+            <img id="pdf-watermark-1" class="watermark-in-table">
+            <table class="word-table">
+                <thead>
+                    <tr><th>Parametro</th><th class="text-right">Valore</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>BMR (Metabolismo Basale)</td><td class="text-right" id="pdf-bmr">-</td></tr>
+                    <tr><td>RMR (Metabolismo a Riposo)</td><td class="text-right" id="pdf-rmr">-</td></tr>
+                    <tr><td>TDEE (Giornaliero)</td><td class="text-right" id="pdf-tdee">-</td></tr>
+                    <tr><td>TDEE Settimanale</td><td class="text-right" id="pdf-tdee-sett">-</td></tr>
+                    <tr><td>G/CC (Densità)</td><td class="text-right" id="pdf-gcc">-</td></tr>
+                    <tr><td>Massa Grassa (FM)</td><td class="text-right" id="pdf-fm">-</td></tr>
+                    <tr><td>Massa Magra (FFM)</td><td class="text-right" id="pdf-ffm">-</td></tr>
+                    <tr><td>Peso Ideale (Range)</td><td class="text-right" id="pdf-ibw">-</td></tr>
+                    <tr><td>Kg Grasso Corporeo</td><td class="text-right" id="pdf-kg-grasso">-</td></tr>
+                    <tr><td>Kg Massa Magra</td><td class="text-right" id="pdf-kg-magro">-</td></tr>
+                    <tr><td id="pdf-label-pliche">Plicometria totale</td><td class="text-right" id="pdf-totale-pliche">-</td></tr>
+                    <tr><td>Peso Corporeo Attuale</td><td class="text-right" id="pdf-peso-attuale">-</td></tr>
+                </tbody>
+            </table>
+        </div>
     </div>
 
     <div class="page-a4">
@@ -108,10 +132,10 @@
         </div>
         
         <div style="position: relative; width: 100%; margin-top: 40px;">
-            <img id="pdf-watermark-2" class="watermark" style="top: 50%;">
+            <img id="pdf-watermark-2" class="watermark-in-table-p2">
             <table class="word-table">
                 <tbody style="font-weight: bold;" id="pdf-antropometria-rows">
-                    </tbody>
+                </tbody>
             </table>
         </div>
         <div class="text-center" style="margin-top: 24px; font-size: 14px; font-weight: bold;">
