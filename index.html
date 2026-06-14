@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dott. Valentino De Salvo - Report Analisi Completo</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         /* Semplici anteprime di visualizzazione locale prima del download */
         @media screen {
@@ -376,8 +377,7 @@
                 document.body.appendChild(iframe);
 
                 iframe.onload = function() {
-                    const iframeWindow = iframe.contentWindow;
-                    const doc = iframeWindow.document;
+                    const doc = iframe.contentDocument || iframe.contentWindow.document;
 
                     // INIEZIONE DEI DATI
                     doc.getElementById('pdf-watermark-1').src = b64Watermark;
@@ -412,10 +412,9 @@
                     doc.getElementById('pdf-metodo').innerText = reportDataStore.sesso === 'M' ? 'Metodo: Jackson & Pollock / 7 pliche' : 'Metodo: Jackson & Pollock / 3 pliche';
                     doc.getElementById('pdf-somma-totale').innerText = reportDataStore.haPliche ? reportDataStore.sommaPliche.toFixed(2).replace('.', ',') : '-';
 
-                    // Forza il reflow degli stili
                     doc.body.offsetHeight; 
 
-                    // CHIAMATA ALLA LIBRERIA ESTRATTA DALLA FINESTRA DELL'IFRAME STESSO
+                    // CHIAMATA MASTER: html2pdf() principale focalizzato solo sul documento interno
                     const nomeFile = "Composizione corporea e Fabbisogni energetici " + reportDataStore.dataFormattata;
                     const opt = {
                         margin: 0,
@@ -425,14 +424,15 @@
                             scale: 2, 
                             useCORS: true, 
                             backgroundColor: '#ffffff', 
-                            logging: false
+                            logging: false,
+                            container: doc.body // Obbliga l'esecutore a scansionare unicamente le regole interne dell'iframe
                         },
                         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
                         pagebreak: { mode: ['css', 'legacy'] }
                     };
 
-                    // Esecuzione blindata sul contesto interno dell'iframe
-                    iframeWindow.html2pdf().set(opt).from(doc.body).save().then(() => {
+                    // Esecuzione fluida gestita dal file master
+                    window.html2pdf().set(opt).from(doc.body).save().then(() => {
                         btn.disabled = false;
                         btn.classList.replace('bg-slate-400', 'bg-emerald-600');
                         btnText.innerText = "📥 Scarica PDF Pronto";
