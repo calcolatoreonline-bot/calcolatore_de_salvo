@@ -7,15 +7,29 @@
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
+        /* Forza stili compatibili Hex/RGB nativi sulle pagine destinate al PDF per evitare il crash di oklch */
         .pdf-page-render {
             width: 210mm !important;
             height: 297mm !important;
             padding: 20mm !important;
             box-sizing: border-box !important;
-            background-color: white !important;
+            background-color: #ffffff !important;
+            color: #000000 !important;
             position: relative !important;
             overflow: hidden !important;
         }
+
+        /* Sovrascrittura di sicurezza per evitare che oklch di Tailwind v4 infetti le tabelle del PDF */
+        .pdf-page-render * {
+            background-color: transparent !important;
+            color: #000000 !important;
+            border-color: #000000 !important;
+        }
+
+        /* Ripristino specifico per gli sfondi grafici del PDF che devono rimanere colorati */
+        .pdf-page-render h2 { background-color: #2563eb !important; color: #ffffff !important; }
+        .pdf-page-render h1 { background-color: #facc15 !important; color: #000000 !important; }
+        .pdf-page-render th { background-color: #f2f2f2 !important; color: #000000 !important; font-weight: bold !important; }
 
         @media screen {
             html, body { overflow-x: hidden !important; width: 100%; }
@@ -34,7 +48,6 @@
         .watermark-bg { position: absolute; top: calc(50% + 45mm); left: 50%; transform: translate(-50%, -50%); width: 75%; opacity: 0.06; pointer-events: none; z-index: 0; }
         .word-table { border-collapse: collapse; width: 100%; z-index: 10; position: relative; }
         .word-table th, .word-table td { border: 1px solid #000000 !important; padding: 6px 12px !important; font-family: Arial, sans-serif !important; font-size: 13px !important; }
-        .word-table th { background-color: #f2f2f2 !important; font-weight: bold !important; text-align: left; }
         
         #elite-table-body td:last-child { font-weight: bold !important; }
     </style>
@@ -338,10 +351,9 @@
             document.getElementById('report-container').scrollIntoView({ behavior: 'smooth' });
         }
 
-        // Helper interno per convertire i nodi immagine in stringhe Base64 al volo prima del rendering
         function toBase64(imgElement) {
             return new Promise((resolve) => {
-                if (!imgElement || imgElement.src.startsWith('data:')) {
+                if (!imgElement || !imgElement.src || imgElement.src.startsWith('data:')) {
                     resolve(imgElement ? imgElement.src : '');
                     return;
                 }
@@ -363,7 +375,8 @@
                     }
                 };
                 img.onerror = function() {
-                    resolve(imgElement.src);
+                    console.warn("Impossibile caricare la risorsa immagine:", imgElement.src);
+                    resolve(''); // Fallback vuoto in caso di 404 per non bloccare lo script
                 };
             });
         }
@@ -380,7 +393,6 @@
             btn.classList.replace('bg-emerald-600', 'bg-slate-400');
             btnText.innerText = "⏳ Generazione PDF...";
 
-            // Utilizziamo un asincronismo controllato per permettere l'elaborazione Base64 delle immagini dei cloni
             try {
                 const dataStr = document.getElementById('out-data').innerText || "";
                 const nomeFile = "Composizione corporea e Fabbisogni energetici " + dataStr;
@@ -393,7 +405,6 @@
                 page1.classList.remove('border', 'border-slate-300', 'shadow-sm');
                 page2.classList.remove('border', 'border-slate-300', 'shadow-sm');
 
-                // Intercettiamo ed eseguiamo la conversione di sicurezza in Base64 su tutte le immagini clonate
                 const immaginiPagina1 = page1.querySelectorAll('img');
                 for (let img of immaginiPagina1) {
                     img.src = await toBase64(img);
