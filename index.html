@@ -4,12 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dott. Valentino De Salvo - Report Analisi Completo</title>
-    <!-- Tailwind v4 gestisce l'interfaccia a schermo senza conflitti -->
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <!-- Includiamo la libreria html2pdf nella pagina principale -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
-        /* Stile di anteprima a schermo per i due fogli (prima del download) */
+        /* Semplici anteprime di visualizzazione locale prima del download */
         @media screen {
             .pdf-page-preview {
                 width: 210mm;
@@ -36,7 +34,6 @@
 </head>
 <body class="bg-slate-100 p-4 md:p-8">
 
-    <!-- Configurazione UI Interfaccia -->
     <div id="interface-ui" class="max-w-4xl mx-auto bg-white p-4 md:p-8 rounded-xl shadow-lg border border-slate-200 mb-10">
         <h1 class="text-xl font-bold mb-6 text-slate-800 border-b pb-2">Configurazione Paziente</h1>
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
@@ -69,16 +66,14 @@
         </button>
     </div>
 
-    <!-- Area delle Preview a Schermo (Solo visive per l'utente) -->
     <div id="preview-block-completo" class="w-full flex flex-col gap-10 items-center">
         
         <div id="action-bar" class="hidden w-full max-w-[210mm] flex justify-center gap-4 mb-6">
-            <button id="btn-esporta" onclick="scaricaPDFTramiteIframe()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-8 rounded-lg transition-colors flex items-center gap-2">
+            <button id="btn-esporta" onclick="scaricaPDFTramiteFileSeparato()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-8 rounded-lg transition-colors flex items-center gap-2">
                 <span id="btn-text">📥 Scarica PDF Pronto</span>
             </button>
         </div>
 
-        <!-- PREVIEW PAGINA 1 -->
         <div id="preview-container-p1" class="w-full max-w-[210mm] hidden preview-scroll">
             <div class="pdf-page-preview">
                 <img src="logo_de_salvo_transparent.png" class="watermark-preview">
@@ -113,7 +108,6 @@
             </div>
         </div>
 
-        <!-- PREVIEW PAGINA 2 -->
         <div id="preview-container-p2" class="w-full max-w-[210mm] hidden preview-scroll">
             <div class="pdf-page-preview">
                 <div class="flex justify-between items-center h-40 w-full mb-4 relative z-10">
@@ -145,8 +139,8 @@
     </div>
 
     <script>
-        // Memoria locale dei dati calcolati per passarli all'Iframe
-        let datiReport Globale = {};
+        // Oggetto globale per conservare i calcoli correnti
+        let reportDataStore = {};
 
         function aggiornaInterfaccia() {
             const sesso = document.getElementById('in-sesso').value;
@@ -228,13 +222,13 @@
             const anno = oggi.getFullYear();
             const dataFormattata = `${giorno}-${mese}-${anno}`;
 
-            // Memorizziamo nel dizionario globale per l'iframe
-            datiReportGlobale = {
-                sesso, peso, altezza, eta, laf, atletaStringa, dataFormattata, haPliche, sommaPliche, plicheMap,
-                valoriStr: {
+            // Reset del contenitore dati
+            reportDataStore = {
+                sesso, atletaStringa, dataFormattata, haPliche, sommaPliche,
+                metrics: {
                     bmr: "-", rmr: "-", tdee: "-", tdeeSett: "-", gcc: "-", fm: "-", ffm: "-", ibw: "-", kgGrasso: "-", kgMagro: "-", totalePliche: haPliche ? sommaPliche.toFixed(1).replace('.', ',') + " mm" : "-", pesoAttuale: !isNaN(peso) ? peso.toFixed(2).replace('.', ',') + " kg" : "-"
                 },
-                antropometriaHtml: ""
+                rowsHtml: ""
             };
 
             document.getElementById('out-nome-completo').innerText = atletaStringa;
@@ -244,10 +238,10 @@
                 const bmr = (sesso === 'M') ? (10 * peso) + (6.25 * altezza) - (5 * eta) + 5 : (10 * peso) + (6.25 * altezza) - (5 * eta) - 161;
                 const rmr = (sesso === 'M') ? 66.473 + (13.7516 * peso) + (5.0033 * altezza) - (6.755 * eta) : 655.0955 + (9.5634 * peso) + (1.8496 * altezza) - (4.6756 * eta);
                 
-                datiReportGlobale.valoriStr.bmr = Math.round(bmr) + " kcal";
-                datiReportGlobale.valoriStr.rmr = Math.round(rmr) + " kcal";
-                datiReportGlobale.valoriStr.tdee = Math.round(bmr * laf) + " kcal";
-                datiReportGlobale.valoriStr.tdeeSett = Math.round(bmr * laf * 7) + " kcal/sett";
+                reportDataStore.metrics.bmr = Math.round(bmr) + " kcal";
+                reportDataStore.metrics.rmr = Math.round(rmr) + " kcal";
+                reportDataStore.metrics.tdee = Math.round(bmr * laf) + " kcal";
+                reportDataStore.metrics.tdeeSett = Math.round(bmr * laf * 7) + " kcal/sett";
             }
 
             if (haPliche && !isNaN(peso) && !isNaN(eta)) {
@@ -262,34 +256,33 @@
                 const ibwMin = (sesso === 'M') ? (kgMagro / 0.90) : (kgMagro / 0.82);
                 const ibwMax = (sesso === 'M') ? (kgMagro / 0.88) : (kgMagro / 0.78);
 
-                datiReportGlobale.valoriStr.gcc = densita.toFixed(4).replace('.', ',') + " g/cc";
-                datiReportGlobale.valoriStr.fm = fm.toFixed(2).replace('.', ',') + " %";
-                datiReportGlobale.valoriStr.ffm = (100 - fm).toFixed(2).replace('.', ',') + " %";
-                datiReportGlobale.valoriStr.ibw = Math.round(ibwMin) + " - " + Math.round(ibwMax) + " kg";
-                datiReportGlobale.valoriStr.kgGrasso = kgGrasso.toFixed(2).replace('.', ',') + " kg";
-                datiReportGlobale.valoriStr.kgMagro = kgMagro.toFixed(2).replace('.', ',') + " kg";
-                datiReportGlobale.valoriStr.totalePliche = sommaPliche.toFixed(1).replace('.', ',') + " mm";
+                reportDataStore.metrics.gcc = densita.toFixed(4).replace('.', ',') + " g/cc";
+                reportDataStore.metrics.fm = fm.toFixed(2).replace('.', ',') + " %";
+                reportDataStore.metrics.ffm = (100 - fm).toFixed(2).replace('.', ',') + " %";
+                reportDataStore.metrics.ibw = Math.round(ibwMin) + " - " + Math.round(ibwMax) + " kg";
+                reportDataStore.metrics.kgGrasso = kgGrasso.toFixed(2).replace('.', ',') + " kg";
+                reportDataStore.metrics.kgMagro = kgMagro.toFixed(2).replace('.', ',') + " kg";
             } else if (!isNaN(altezza) && altezza > 0) {
                 const hMetri = altezza / 100;
-                datiReportGlobale.valoriStr.ibw = Math.round(18.5 * hMetri * hMetri) + " - " + Math.round(24.9 * hMetri * hMetri) + " kg";
+                reportDataStore.metrics.ibw = Math.round(18.5 * hMetri * hMetri) + " - " + Math.round(24.9 * hMetri * hMetri) + " kg";
             }
 
-            // Push a schermo delle variabili della Pagina 1
-            document.getElementById('out-bmr').innerText = datiReportGlobale.valoriStr.bmr;
-            document.getElementById('out-rmr').innerText = datiReportGlobale.valoriStr.rmr;
-            document.getElementById('out-tdee').innerText = datiReportGlobale.valoriStr.tdee;
-            document.getElementById('out-tdee-sett').innerText = datiReportGlobale.valoriStr.tdeeSett;
-            document.getElementById('out-gcc').innerText = datiReportGlobale.valoriStr.gcc;
-            document.getElementById('out-fm').innerText = datiReportGlobale.valoriStr.fm;
-            document.getElementById('out-ffm').innerText = datiReportGlobale.valoriStr.ffm;
-            document.getElementById('out-ibw').innerText = datiReportGlobale.valoriStr.ibw;
-            document.getElementById('out-kg-grasso').innerText = datiReportGlobale.valoriStr.kgGrasso;
-            document.getElementById('out-kg-magro').innerText = datiReportGlobale.valoriStr.kgMagro;
-            document.getElementById('out-totale-pliche').innerText = datiReportGlobale.valoriStr.totalePliche;
-            document.getElementById('out-peso-attuale').innerText = datiReportGlobale.valoriStr.pesoAttuale;
+            // Push a schermo
+            document.getElementById('out-bmr').innerText = reportDataStore.metrics.bmr;
+            document.getElementById('out-rmr').innerText = reportDataStore.metrics.rmr;
+            document.getElementById('out-tdee').innerText = reportDataStore.metrics.tdee;
+            document.getElementById('out-tdee-sett').innerText = reportDataStore.metrics.tdeeSett;
+            document.getElementById('out-gcc').innerText = reportDataStore.metrics.gcc;
+            document.getElementById('out-fm').innerText = reportDataStore.metrics.fm;
+            document.getElementById('out-ffm').innerText = reportDataStore.metrics.ffm;
+            document.getElementById('out-ibw').innerText = reportDataStore.metrics.ibw;
+            document.getElementById('out-kg-grasso').innerText = reportDataStore.metrics.kgGrasso;
+            document.getElementById('out-kg-magro').innerText = reportDataStore.metrics.kgMagro;
+            document.getElementById('out-totale-pliche').innerText = reportDataStore.metrics.totalePliche;
+            document.getElementById('out-peso-attuale').innerText = reportDataStore.metrics.pesoAttuale;
             document.getElementById('label-totale-pliche').innerText = (sesso === 'M') ? "Plicometria totale (7 pliche):" : "Plicometria totale (3 pliche):";
 
-            // Anteprime Immagini Elite
+            // Aggiornamento immagini Elite locali
             const imgPathElite = sesso === 'M' ? 'COMPOSIZIONE CORPOREA UOMO.JPEG' : 'COMPOSIZIONE CORPOREA DONNA.JPEG';
             document.getElementById('elite-sil-l').src = imgPathElite;
             document.getElementById('elite-sil-r').src = imgPathElite;
@@ -298,9 +291,8 @@
             document.getElementById('elite-somma-totale').innerText = haPliche ? sommaPliche.toFixed(2).replace('.', ',') + " mm" : "-";
             document.getElementById('elite-metodo').innerText = sesso === 'M' ? 'Metodo: Jackson & Pollock / 7 pliche' : 'Metodo: Jackson & Pollock / 3 pliche';
 
-            // Composizione righe tabella Elite
             if (sesso === 'M') {
-                datiReportGlobale.antropometriaHtml = `
+                reportDataStore.rowsHtml = `
                     <tr><td>Peso</td><td>${formatVal('in-peso')}kg</td></tr>
                     <tr><td>Altezza</td><td>${formatVal('in-altezza')}cm</td></tr>
                     <tr><td>Circonferenza collo</td><td>${formatVal('c-collo')}cm</td></tr>
@@ -318,7 +310,7 @@
                     <tr><td>Plica coscia</td><td>${formatPlica('Coscia')} mm</td></tr>
                 `;
             } else {
-                datiReportGlobale.antropometriaHtml = `
+                reportDataStore.rowsHtml = `
                     <tr><td>Peso</td><td>${formatVal('in-peso')}kg</td></tr>
                     <tr><td>Altezza</td><td>${formatVal('in-altezza')}cm</td></tr>
                     <tr><td>Circonferenza collo</td><td>${formatVal('c-collo')}cm</td></tr>
@@ -335,17 +327,16 @@
                 `;
             }
 
-            document.getElementById('elite-table-body').innerHTML = datiReportGlobale.antropometriaHtml;
+            document.getElementById('elite-table-body').innerHTML = reportDataStore.rowsHtml;
 
-            // Riveliamo l'interfaccia a schermo
             document.getElementById('preview-container-p1').classList.remove('hidden');
             document.getElementById('preview-container-p2').classList.remove('hidden');
             document.getElementById('action-bar').classList.remove('hidden');
             document.getElementById('preview-container-p1').scrollIntoView({ behavior: 'smooth' });
         }
 
-        // Funzione helper per convertire le immagini in Base64 ed evitare blocchi CORS nell'Iframe
-        function imgToBase64Url(url) {
+        // Helper asincrono per l'esportazione delle immagini Base64 senza blocchi di sicurezza
+        function convertiInBase64(url) {
             return new Promise((resolve) => {
                 const img = new Image();
                 img.crossOrigin = 'Anonymous';
@@ -362,203 +353,98 @@
             });
         }
 
-        async function scaricaPDFTramiteIframe() {
+        async function scaricaPDFTramiteFileSeparato() {
             const btn = document.getElementById('btn-esporta');
             const btnText = document.getElementById('btn-text');
             btn.disabled = true;
             btn.classList.replace('bg-emerald-600', 'bg-slate-400');
-            btnText.innerText = "⏳ Ottimizzazione...";
+            btnText.innerText = "⏳ Preparazione Modello...";
 
             try {
-                // Convertiamo al volo i file immagine locali in stringhe stabili Base64
-                const silhouettePath = datiReportGlobale.sesso === 'M' ? 'Siluette_Uomo.jpeg' : 'Siluette_Donna.jpeg';
-                const silhouetteElitePath = datiReportGlobale.sesso === 'M' ? 'COMPOSIZIONE CORPOREA UOMO.JPEG' : 'COMPOSIZIONE CORPOREA DONNA.JPEG';
+                // Convertiamo preventivamente le immagini per blindare l'esportazione
+                const silhouettePath = reportDataStore.sesso === 'M' ? 'Siluette_Uomo.jpeg' : 'Siluette_Donna.jpeg';
+                const silhouetteElitePath = reportDataStore.sesso === 'M' ? 'COMPOSIZIONE CORPOREA UOMO.JPEG' : 'COMPOSIZIONE CORPOREA DONNA.JPEG';
                 
-                const b64Watermark = await imgToBase64Url('logo_de_salvo_transparent.png');
-                const b64Silhouette = await imgToBase64Url(silhouettePath);
-                const b64SilhouetteElite = await imgToBase64Url(silhouetteElitePath);
+                const b64Watermark = await convertiInBase64('logo_de_salvo_transparent.png');
+                const b64Silhouette = await convertiInBase64(silhouettePath);
+                const b64SilhouetteElite = await convertiInBase64(silhouetteElitePath);
 
-                // Rimuoviamo eventuali iframe residui
-                const vecchioIframe = document.getElementById('iframe-pdf-isolato');
+                // Ripuliamo iframe vecchi rimasti appesi
+                const vecchioIframe = document.getElementById('pdf-iframe-worker');
                 if (vecchioIframe) vecchioIframe.remove();
 
-                // Creiamo l'Iframe fantasma invisibile all'utente
+                // Creiamo l'iframe nascosto collegato al nuovo file HTML
                 const iframe = document.createElement('iframe');
-                iframe.id = 'iframe-pdf-isolato';
+                iframe.id = 'pdf-iframe-worker';
+                iframe.src = 'report-template.html'; // <--- Chiamata al nuovo file esterno!
                 iframe.style.position = 'absolute';
                 iframe.style.width = '0px';
                 iframe.style.height = '0px';
                 iframe.style.border = 'none';
                 document.body.appendChild(iframe);
 
-                const doc = iframe.contentDocument || iframe.contentWindow.document;
+                // Aspettiamo che il file report-template.html sia interamente caricato in memoria nell'iframe
+                iframe.onload = function() {
+                    const doc = iframe.contentDocument || iframe.contentWindow.document;
 
-                // Stringa HTML pura con CSS Standard Inline. Nessun file o foglio di stile esterno oklch!
-                const htmlContenuto = `
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <meta charset="UTF-8">
-                    <style>
-                        body { margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #ffffff; color: #000000; }
-                        .page-a4 {
-                            width: 210mm;
-                            height: 297mm;
-                            padding: 20mm;
-                            box-sizing: border-box;
-                            position: relative;
-                            overflow: hidden;
-                            background-color: #ffffff;
-                        }
-                        .watermark {
-                            position: absolute;
-                            top: 60%;
-                            left: 50%;
-                            transform: translate(-50%, -50%);
-                            width: 75%;
-                            opacity: 0.06;
-                            z-index: 0;
-                        }
-                        .header-row { display: table; width: 100%; height: 160px; margin-bottom: 16px; position: relative; z-index: 10; }
-                        .header-cell { display: table-cell; vertical-align: middle; }
-                        .title-p1 {
-                            background-color: #2563eb;
-                            color: #ffffff;
-                            text-align: center;
-                            font-weight: 900;
-                            font-size: 24px;
-                            padding: 12px 0;
-                            text-transform: uppercase;
-                            margin-top: 25mm;
-                            margin-bottom: 24px;
-                        }
-                        .title-p2 {
-                            background-color: #facc15;
-                            color: #000000;
-                            font-weight: bold;
-                            padding: 4px 16px;
-                            font-size: 20px;
-                            border-bottom: 4px solid #000000;
-                            display: inline-block;
-                            text-transform: uppercase;
-                            margin-bottom: 4px;
-                        }
-                        .word-table { border-collapse: collapse; width: 100%; z-index: 10; position: relative; margin-top: 20px; }
-                        .word-table th, .word-table td { border: 1px solid #000000; padding: 6px 12px; font-size: 13px; }
-                        .word-table th { background-color: #f2f2f2; font-weight: bold; }
-                        .text-right { text-align: right; }
-                        .text-center { text-align: center; }
-                        .page-break { page-break-after: always; }
-                    </style>
-                </head>
-                <body>
-                    <!-- PAGINA 1 -->
-                    <div class="page-a4 page-break">
-                        <img src="${b64Watermark}" class="watermark">
-                        <div class="header-row">
-                            <div class="header-cell" style="width: 192px;"><img src="${b64Silhouette}" style="height: 240px; width: auto;"></div>
-                            <div class="header-cell text-center">
-                                <img src="${b64Watermark}" style="height: 80px; margin-bottom: 8px;">
-                                <div style="font-weight: bold; font-size: 18px; color: #1e293b;">
-                                    ${datiReportGlobale.atletaStringa}<br>
-                                    <span style="font-size: 14px; color: #475569;">${datiReportGlobale.dataFormattata}</span>
-                                </div>
-                            </div>
-                            <div class="header-cell text-right" style="width: 192px;"><img src="${b64Silhouette}" style="height: 240px; width: auto;"></div>
-                        </div>
-                        
-                        <div class="title-p1">Fabbisogni Energetici</div>
-                        
-                        <table class="word-table">
-                            <thead>
-                                <tr><th>Parametro</th><th class="text-right">Valore</th></tr>
-                            </thead>
-                            <tbody>
-                                <tr><td>BMR (Metabolismo Basale)</td><td class="text-right">${datiReportGlobale.valoriStr.bmr}</td></tr>
-                                <tr><td>RMR (Metabolismo a Riposo)</td><td class="text-right">${datiReportGlobale.valoriStr.rmr}</td></tr>
-                                <tr><td>TDEE (Giornaliero)</td><td class="text-right">${datiReportGlobale.valoriStr.tdee}</td></tr>
-                                <tr><td>TDEE Settimanale</td><td class="text-right">${datiReportGlobale.valoriStr.tdeeSett}</td></tr>
-                                <tr><td>G/CC (Densità)</td><td class="text-right">${datiReportGlobale.valoriStr.gcc}</td></tr>
-                                <tr><td>Massa Grassa (FM)</td><td class="text-right">${datiReportGlobale.valoriStr.fm}</td></tr>
-                                <tr><td>Massa Magra (FFM)</td><td class="text-right">${datiReportGlobale.valoriStr.ffm}</td></tr>
-                                <tr><td>Peso Ideale (Range)</td><td class="text-right">${datiReportGlobale.valoriStr.ibw}</td></tr>
-                                <tr><td>Kg Grasso Corporeo</td><td class="text-right">${datiReportGlobale.valoriStr.kgGrasso}</td></tr>
-                                <tr><td>Kg Massa Magra</td><td class="text-right">${datiReportGlobale.valoriStr.kgMagro}</td></tr>
-                                <tr><td>${datiReportGlobale.sesso === 'M' ? 'Plicometria totale (7 pliche):' : 'Plicometria totale (3 pliche):'}</td><td class="text-right">${datiReportGlobale.valoriStr.totalePliche}</td></tr>
-                                <tr><td>Peso Corporeo Attuale</td><td class="text-right">${datiReportGlobale.valoriStr.pesoAttuale}</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
+                    // INIEZIONE CHIRURGICA DEI DATI NEI RISPETTIVI TAG DEL NUOVO FILE HTML
+                    doc.getElementById('pdf-watermark-1').src = b64Watermark;
+                    doc.getElementById('pdf-watermark-2').src = b64Watermark;
+                    doc.getElementById('pdf-logo-1').src = b64Watermark;
+                    doc.getElementById('pdf-logo-2').src = b64Watermark;
+                    doc.getElementById('pdf-sil-l').src = b64Silhouette;
+                    doc.getElementById('pdf-sil-r').src = b64Silhouette;
+                    doc.getElementById('pdf-elite-sil-l').src = b64SilhouetteElite;
+                    doc.getElementById('pdf-elite-sil-r').src = b64SilhouetteElite;
 
-                    <!-- PAGINA 2 -->
-                    <div class="page-a4">
-                        <div class="header-row">
-                            <div class="header-cell" style="width: 192px;"><img src="${b64SilhouetteElite}" style="height: 260px; margin-left: -24px;"></div>
-                            <div class="header-cell text-center">
-                                <img src="${b64Watermark}" style="height: 80px; margin-bottom: 8px;">
-                                <div class="title-p2">Composizione Corporea</div>
-                                <div style="font-weight: bold; font-size: 18px; color: #1e293b; margin-top: 25px;">
-                                    ${datiReportGlobale.atletaStringa}<br>
-                                    <span style="font-size: 14px; color: #475569;">${datiReportGlobale.dataFormattata}</span>
-                                </div>
-                            </div>
-                            <div class="header-cell text-right" style="width: 192px;"><img src="${b64SilhouetteElite}" style="height: 260px; margin-right: -24px;"></div>
-                        </div>
-                        
-                        <div style="position: relative; width: 100%; margin-top: 40px;">
-                            <img src="${b64Watermark}" class="watermark" style="top: 50%;">
-                            <table class="word-table">
-                                <tbody style="font-weight: bold;">
-                                    ${datiReportGlobale.antropometriaHtml}
-                                </tbody>
-                            </table>
-                        </div>
-                        <div class="text-center" style="margin-top: 24px; font-size: 14px; font-weight: bold;">
-                            <p>Plicometro: GIMA DIGITALE (modello 37320)</p>
-                            <p>${datiReportGlobale.sesso === 'M' ? 'Metodo: Jackson & Pollock / 7 pliche' : 'Metodo: Jackson & Pollock / 3 pliche'}</p>
-                            <p>Somma pliche (mm)= <span>${datiReportGlobale.haPliche ? datiReportGlobale.sommaPliche.toFixed(2).replace('.', ',') : '-'}</span></p>
-                        </div>
-                    </div>
-                </body>
-                </html>`;
+                    doc.getElementById('pdf-atleta-p1').innerText = reportDataStore.atletaStringa;
+                    doc.getElementById('pdf-atleta-p2').innerText = reportDataStore.atletaStringa;
+                    doc.getElementById('pdf-data-p1').innerText = reportDataStore.dataFormattata;
+                    doc.getElementById('pdf-data-p2').innerText = reportDataStore.dataFormattata;
 
-                doc.open();
-                doc.write(htmlContenuto);
-                doc.close();
+                    // Compilazione Tabella Pagina 1
+                    doc.getElementById('pdf-bmr').innerText = reportDataStore.metrics.bmr;
+                    doc.getElementById('pdf-rmr').innerText = reportDataStore.metrics.rmr;
+                    doc.getElementById('pdf-tdee').innerText = reportDataStore.metrics.tdee;
+                    doc.getElementById('pdf-tdee-sett').innerText = reportDataStore.metrics.tdeeSett;
+                    doc.getElementById('pdf-gcc').innerText = reportDataStore.metrics.gcc;
+                    doc.getElementById('pdf-fm').innerText = reportDataStore.metrics.fm;
+                    doc.getElementById('pdf-ffm').innerText = reportDataStore.metrics.ffm;
+                    doc.getElementById('pdf-ibw').innerText = reportDataStore.metrics.ibw;
+                    doc.getElementById('pdf-kg-grasso').innerText = reportDataStore.metrics.kgGrasso;
+                    doc.getElementById('pdf-kg-magro').innerText = reportDataStore.metrics.kgMagro;
+                    doc.getElementById('pdf-totale-pliche').innerText = reportDataStore.metrics.totalePliche;
+                    doc.getElementById('pdf-peso-attuale').innerText = reportDataStore.metrics.pesoAttuale;
+                    doc.getElementById('pdf-label-pliche').innerText = (reportDataStore.sesso === 'M') ? "Plicometria totale (7 pliche):" : "Plicometria totale (3 pliche):";
 
-                // Aspettiamo un istante il rendering del DOM interno prima dello scatto grafico
-                setTimeout(() => {
-                    const corpoIframe = doc.body;
-                    const nomeFile = "Composizione corporea e Fabbisogni energetici " + datiReportGlobale.dataFormattata;
+                    // Compilazione Tabella Elite Pagina 2
+                    doc.getElementById('pdf-antropometria-rows').innerHTML = reportDataStore.rowsHtml;
+                    doc.getElementById('pdf-metodo').innerText = reportDataStore.sesso === 'M' ? 'Metodo: Jackson & Pollock / 7 pliche' : 'Metodo: Jackson & Pollock / 3 pliche';
+                    doc.getElementById('pdf-somma-totale').innerText = reportDataStore.haPliche ? reportDataStore.sommaPliche.toFixed(2).replace('.', ',') : '-';
 
+                    // Lancio del motore html2pdf puntato esclusivamente sul body dell'Iframe sanificato
+                    const nomeFile = "Composizione corporea e Fabbisogni energetici " + reportDataStore.dataFormattata;
                     const opt = {
                         margin: 0,
                         filename: nomeFile + '.pdf',
                         image: { type: 'jpeg', quality: 0.98 },
-                        html2canvas: { 
-                            scale: 2, 
-                            useCORS: true, 
-                            backgroundColor: '#ffffff',
-                            logging: false
-                        },
+                        html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff', logging: false },
                         jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
                         pagebreak: { mode: ['css', 'legacy'] }
                     };
 
-                    // Passiamo il body dell'iframe isolato a html2pdf. 
-                    html2pdf().set(opt).from(corpoIframe).save().then(() => {
-                        // Ripristino del pulsante a operazione conclusa
+                    html2pdf().set(opt).from(doc.body).save().then(() => {
                         btn.disabled = false;
                         btn.classList.replace('bg-slate-400', 'bg-emerald-600');
                         btnText.innerText = "📥 Scarica PDF Pronto";
-                        iframe.remove(); // Distruggiamo l'iframe temporaneo
+                        iframe.remove(); // Distruggiamo l'iframe temporaneo per liberare la memoria
                     }).catch(err => {
-                        console.error("Errore esportazione PDF:", err);
+                        console.error("Errore esportazione html2pdf:", err);
                         btn.disabled = false;
                         btn.classList.replace('bg-slate-400', 'bg-emerald-600');
                         btnText.innerText = "📥 Scarica PDF Pronto";
                     });
-                }, 400);
+                };
 
             } catch (error) {
                 console.error("Errore logico:", error);
