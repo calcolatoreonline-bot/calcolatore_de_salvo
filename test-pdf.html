@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>Test Isolato html2pdf - Soluzione Flash</title>
+    <title>Test Isolato html2pdf - Rimozione Immagini Diagnostica</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         .pagina-a4 {
@@ -20,7 +20,7 @@
 
     <div style="margin-bottom: 20px; text-align: center;">
         <button id="btn-esporta" onclick="scaricaPDFClientSide()" style="padding: 10px 20px; font-size: 16px; background-color: #059669; color: white; border: none; border-radius: 5px; cursor: pointer;">
-            📥 Clicca qui per testare il PDF (Flash Visivo)
+            📥 Clicca qui per testare il PDF (Senza Immagini)
         </button>
     </div>
 
@@ -52,9 +52,7 @@
             btn.innerText = "⏳ Generazione PDF...";
 
             try {
-                // 1. Creiamo il wrapper COMPOSTO E VISIBILE al 100%
                 const tempWrapper = document.createElement('div');
-                // Lo teniamo bloccato in fondo alla pagina per ridurre l'impatto visivo
                 tempWrapper.style.position = 'relative';
                 tempWrapper.style.width = '210mm';
                 tempWrapper.style.backgroundColor = '#ffffff';
@@ -62,6 +60,11 @@
                 const page1 = document.getElementById('pdf-content').cloneNode(true);
                 const page2 = document.getElementById('elite-content').cloneNode(true);
                 
+                // RIMOZIONE DIAGNOSTICA DELLE IMMAGINI SOLO DAL CLONE
+                // Cerchiamo tutti i tag <img> all'interno dei cloni e li distruggiamo
+                page1.querySelectorAll('img').forEach(img => img.remove());
+                page2.querySelectorAll('img').forEach(img => img.remove());
+
                 const pageBreak = document.createElement('div');
                 pageBreak.className = 'html2pdf__page-break';
 
@@ -69,17 +72,16 @@
                 tempWrapper.appendChild(pageBreak);
                 tempWrapper.appendChild(page2);
 
-                // 2. Lo appendiamo visibile: il browser DEVE calcolare i colori e i testi
                 document.body.appendChild(tempWrapper);
 
                 const opt = {
                     margin: 0,
-                    filename: 'test-flash-successo.pdf',
+                    filename: 'test-diagnostico-testo.pdf',
                     image: { type: 'jpeg', quality: 0.98 },
                     html2canvas: { 
                         scale: 2, 
                         useCORS: true, 
-                        allowTaint: true,
+                        allowTaint: false, // Rigorosamente false per evitare contaminazioni latenti
                         backgroundColor: '#ffffff',
                         logging: false
                     },
@@ -87,11 +89,10 @@
                     pagebreak: { mode: 'css' }
                 };
 
-                // 3. Il motore fotografa e poi distruggiamo subito il wrapper
                 html2pdf().set(opt).from(tempWrapper).save().then(() => {
                     document.body.removeChild(tempWrapper);
                     btn.disabled = false;
-                    btn.innerText = "📥 Clicca qui per testare il PDF (Flash Visivo)";
+                    btn.innerText = "📥 Clicca qui per testare il PDF (Senza Immagini)";
                     console.log("PDF generato con successo!");
                 }).catch(err => {
                     console.error("Errore durante il salvataggio:", err);
