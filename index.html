@@ -356,15 +356,13 @@
             btn.classList.replace('bg-emerald-600', 'bg-slate-400');
             btnText.innerText = "⏳ Preparazione Modello...";
 
-            // Contenitore visibile ma trasparente durante il render (html2canvas richiede elementi nel viewport)
-            let renderContainer = document.getElementById('pdf-render-container');
-            if (!renderContainer) {
-                renderContainer = document.createElement('div');
-                renderContainer.id = 'pdf-render-container';
-                document.body.appendChild(renderContainer);
-            }
-            // Stile: visibile ma sovrapposto e non interagibile
-            renderContainer.style.cssText = 'position:fixed;top:0;left:0;width:210mm;opacity:0;pointer-events:none;z-index:9999;background:#fff;';
+            // Iframe nascosto: completamente isolato dal DOM principale, non deforma la pagina
+            let iframe = document.getElementById('pdf-render-iframe');
+            if (iframe) iframe.remove();
+            iframe = document.createElement('iframe');
+            iframe.id = 'pdf-render-iframe';
+            iframe.style.cssText = 'position:fixed;top:0;left:0;width:210mm;height:594mm;border:none;visibility:hidden;z-index:-1;';
+            document.body.appendChild(iframe);
 
             try {
                 const silhouettePath = reportDataStore.sesso === 'M' ? 'Siluette_Uomo.jpeg' : 'Siluette_Donna.jpeg';
@@ -377,67 +375,63 @@
                 const response = await fetch('report-template.html');
                 const templateHtml = await response.text();
 
-                const parser = new DOMParser();
-                const templateDoc = parser.parseFromString(templateHtml, 'text/html');
+                // Scrivi il template nell'iframe
+                const iDoc = iframe.contentDocument || iframe.contentWindow.document;
+                iDoc.open();
+                iDoc.write(templateHtml);
+                iDoc.close();
 
-                // Inietta stili del template una sola volta
-                const styleId = 'pdf-template-styles';
-                if (!document.getElementById(styleId)) {
-                    const templateStyle = document.createElement('style');
-                    templateStyle.id = styleId;
-                    templateStyle.textContent = Array.from(templateDoc.querySelectorAll('style')).map(s => s.textContent).join('\n');
-                    document.head.appendChild(templateStyle);
-                }
+                // Aspetta che l'iframe sia pronto
+                await new Promise(r => { iframe.onload = r; setTimeout(r, 800); });
 
-                renderContainer.innerHTML = templateDoc.body.innerHTML;
+                const d = iDoc;
 
                 // Iniezione dati
-                const d = renderContainer;
-                d.querySelector('#pdf-watermark-1').src = b64Watermark;
-                d.querySelector('#pdf-watermark-2').src = b64Watermark;
-                d.querySelector('#pdf-logo-1').src = b64Watermark;
-                d.querySelector('#pdf-logo-2').src = b64Watermark;
-                d.querySelector('#pdf-sil-l').src = b64Silhouette;
-                d.querySelector('#pdf-sil-r').src = b64Silhouette;
-                d.querySelector('#pdf-elite-sil-l').src = b64SilhouetteElite;
-                d.querySelector('#pdf-elite-sil-r').src = b64SilhouetteElite;
+                d.getElementById('pdf-watermark-1').src = b64Watermark;
+                d.getElementById('pdf-watermark-2').src = b64Watermark;
+                d.getElementById('pdf-logo-1').src = b64Watermark;
+                d.getElementById('pdf-logo-2').src = b64Watermark;
+                d.getElementById('pdf-sil-l').src = b64Silhouette;
+                d.getElementById('pdf-sil-r').src = b64Silhouette;
+                d.getElementById('pdf-elite-sil-l').src = b64SilhouetteElite;
+                d.getElementById('pdf-elite-sil-r').src = b64SilhouetteElite;
 
-                d.querySelector('#pdf-atleta-p1').innerText = reportDataStore.atletaStringa;
-                d.querySelector('#pdf-atleta-p2').innerText = reportDataStore.atletaStringa;
-                d.querySelector('#pdf-data-p1').innerText = reportDataStore.dataFormattata;
-                d.querySelector('#pdf-data-p2').innerText = reportDataStore.dataFormattata;
+                d.getElementById('pdf-atleta-p1').innerText = reportDataStore.atletaStringa;
+                d.getElementById('pdf-atleta-p2').innerText = reportDataStore.atletaStringa;
+                d.getElementById('pdf-data-p1').innerText = reportDataStore.dataFormattata;
+                d.getElementById('pdf-data-p2').innerText = reportDataStore.dataFormattata;
 
-                d.querySelector('#pdf-bmr').innerText = reportDataStore.metrics.bmr;
-                d.querySelector('#pdf-rmr').innerText = reportDataStore.metrics.rmr;
-                d.querySelector('#pdf-tdee').innerText = reportDataStore.metrics.tdee;
-                d.querySelector('#pdf-tdee-sett').innerText = reportDataStore.metrics.tdeeSett;
-                d.querySelector('#pdf-gcc').innerText = reportDataStore.metrics.gcc;
-                d.querySelector('#pdf-fm').innerText = reportDataStore.metrics.fm;
-                d.querySelector('#pdf-ffm').innerText = reportDataStore.metrics.ffm;
-                d.querySelector('#pdf-ibw').innerText = reportDataStore.metrics.ibw;
-                d.querySelector('#pdf-kg-grasso').innerText = reportDataStore.metrics.kgGrasso;
-                d.querySelector('#pdf-kg-magro').innerText = reportDataStore.metrics.kgMagro;
-                d.querySelector('#pdf-totale-pliche').innerText = reportDataStore.metrics.totalePliche;
-                d.querySelector('#pdf-peso-attuale').innerText = reportDataStore.metrics.pesoAttuale;
-                d.querySelector('#pdf-label-pliche').innerText = (reportDataStore.sesso === 'M') ? "Plicometria totale (7 pliche):" : "Plicometria totale (3 pliche):";
+                d.getElementById('pdf-bmr').innerText = reportDataStore.metrics.bmr;
+                d.getElementById('pdf-rmr').innerText = reportDataStore.metrics.rmr;
+                d.getElementById('pdf-tdee').innerText = reportDataStore.metrics.tdee;
+                d.getElementById('pdf-tdee-sett').innerText = reportDataStore.metrics.tdeeSett;
+                d.getElementById('pdf-gcc').innerText = reportDataStore.metrics.gcc;
+                d.getElementById('pdf-fm').innerText = reportDataStore.metrics.fm;
+                d.getElementById('pdf-ffm').innerText = reportDataStore.metrics.ffm;
+                d.getElementById('pdf-ibw').innerText = reportDataStore.metrics.ibw;
+                d.getElementById('pdf-kg-grasso').innerText = reportDataStore.metrics.kgGrasso;
+                d.getElementById('pdf-kg-magro').innerText = reportDataStore.metrics.kgMagro;
+                d.getElementById('pdf-totale-pliche').innerText = reportDataStore.metrics.totalePliche;
+                d.getElementById('pdf-peso-attuale').innerText = reportDataStore.metrics.pesoAttuale;
+                d.getElementById('pdf-label-pliche').innerText = (reportDataStore.sesso === 'M') ? "Plicometria totale (7 pliche):" : "Plicometria totale (3 pliche):";
 
-                d.querySelector('#pdf-antropometria-rows').innerHTML = reportDataStore.rowsHtml;
-                d.querySelector('#pdf-metodo').innerText = reportDataStore.sesso === 'M' ? 'Metodo: Jackson & Pollock / 7 pliche' : 'Metodo: Jackson & Pollock / 3 pliche';
-                d.querySelector('#pdf-somma-totale').innerText = reportDataStore.haPliche ? reportDataStore.sommaPliche.toFixed(2).replace('.', ',') : '-';
+                d.getElementById('pdf-antropometria-rows').innerHTML = reportDataStore.rowsHtml;
+                d.getElementById('pdf-metodo').innerText = reportDataStore.sesso === 'M' ? 'Metodo: Jackson & Pollock / 7 pliche' : 'Metodo: Jackson & Pollock / 3 pliche';
+                d.getElementById('pdf-somma-totale').innerText = reportDataStore.haPliche ? reportDataStore.sommaPliche.toFixed(2).replace('.', ',') : '-';
 
-                // Attesa caricamento immagini
+                // Attesa caricamento immagini nell'iframe
                 const images = Array.from(d.querySelectorAll('img'));
                 await Promise.all(images.map(img => new Promise(resolve => {
                     if (img.complete && img.naturalWidth > 0) resolve();
                     else { img.onload = resolve; img.onerror = resolve; }
                 })));
 
-                // Delay layout
+                // Delay per sicurezza layout
                 await new Promise(r => setTimeout(r, 500));
 
                 btnText.innerText = "⏳ Generazione PDF...";
 
-                // Render pagina per pagina con jsPDF + html2canvas direttamente
+                // Render pagina per pagina
                 const { jsPDF } = window.jspdf;
                 const pdf = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
                 const pagine = d.querySelectorAll('.page-a4');
@@ -446,6 +440,7 @@
                     const canvas = await html2canvas(pagine[i], {
                         scale: 2,
                         useCORS: true,
+                        allowTaint: true,
                         backgroundColor: '#ffffff',
                         logging: false,
                         width: pagine[i].scrollWidth,
@@ -462,16 +457,14 @@
                 btn.disabled = false;
                 btn.classList.replace('bg-slate-400', 'bg-emerald-600');
                 btnText.innerText = "📥 Scarica PDF Pronto";
-                renderContainer.style.cssText = 'display:none;';
-                renderContainer.innerHTML = '';
+                iframe.remove();
 
             } catch (error) {
                 console.error("Errore logico:", error);
                 btn.disabled = false;
                 btn.classList.replace('bg-slate-400', 'bg-emerald-600');
                 btnText.innerText = "📥 Scarica PDF Pronto";
-                renderContainer.style.cssText = 'display:none;';
-                renderContainer.innerHTML = '';
+                iframe.remove();
             }
         }
 
