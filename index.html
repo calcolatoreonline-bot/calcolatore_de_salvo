@@ -4,42 +4,44 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dott. Valentino De Salvo - Report Analisi Completo</title>
-    <!-- Tailwind v4 per la UI applicativa locale -->
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <style>
+        /* Grafica Originale Rigida per i due fogli A4 in Anteprima */
+        .pdf-page-render {
+            width: 210mm !important;
+            height: 297mm !important;
+            padding: 20mm !important;
+            box-sizing: border-box !important;
+            background-color: white !important;
+            position: relative !important;
+            overflow: hidden !important;
+        }
+
         @media screen {
-            .pdf-page-preview {
-                width: 210mm;
-                height: 297mm;
-                padding: 20mm;
-                box-sizing: border-box;
-                background-color: #ffffff;
-                position: relative;
-                overflow: hidden;
-                box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
-                border: 1px solid #e2e8f0;
-            }
+            html, body { overflow-x: hidden !important; width: 100%; }
+        }
+
+        @media screen and (max-width: 215mm) {
             .preview-scroll {
-                overflow-x: auto;
+                overflow-x: auto !important;
                 width: 100%;
                 padding-bottom: 1rem;
                 -webkit-overflow-scrolling: touch;
             }
+            .pdf-page-render { margin: 0 auto; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
         }
-        .table-container-preview {
-            position: relative;
-            width: 100%;
-            background-repeat: no-repeat;
-            background-position: center center;
-            background-size: 82% auto;
-        }
-        .table-preview { border-collapse: collapse; width: 100%; z-index: 10; position: relative; background: transparent; }
-        .table-preview th, .table-preview td { border: 1px solid #cbd5e1; padding: 6px 12px; font-size: 13px; background: rgba(255, 255, 255, 0.15); }
+
+        .watermark-bg { position: absolute; top: calc(50% + 45mm); left: 50%; transform: translate(-50%, -50%); width: 75%; opacity: 0.06; pointer-events: none; z-index: 0; }
+        .word-table { border-collapse: collapse; width: 100%; z-index: 10; position: relative; }
+        .word-table th, .word-table td { border: 1px solid #000000 !important; padding: 6px 12px !important; font-family: Arial, sans-serif !important; font-size: 13px !important; }
+        .word-table th { background-color: #f2f2f2 !important; font-weight: bold !important; text-align: left; }
+        
+        #elite-table-body td:last-child { font-weight: bold !important; }
     </style>
 </head>
 <body class="bg-slate-100 p-4 md:p-8">
 
-    <!-- Pannello UI di Configurazione Dati -->
+    <!-- Configurazione Interfaccia UI Input -->
     <div id="interface-ui" class="max-w-4xl mx-auto bg-white p-4 md:p-8 rounded-xl shadow-lg border border-slate-200 mb-10">
         <h1 class="text-xl font-bold mb-6 text-slate-800 border-b pb-2">Configurazione Paziente</h1>
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
@@ -72,7 +74,7 @@
         </button>
     </div>
 
-    <!-- Area delle Preview a Schermo -->
+    <!-- Blocco di Anteprima e Azione -->
     <div id="preview-block-completo" class="w-full flex flex-col gap-10 items-center">
         
         <div id="action-bar" class="hidden w-full max-w-[210mm] flex justify-center gap-4 mb-6">
@@ -81,63 +83,64 @@
             </button>
         </div>
 
-        <!-- PREVIEW PAGINA 1 -->
+        <!-- PAGINA 1 ANTEPRIMA (Fabbisogni Energetici) -->
         <div id="preview-container-p1" class="w-full max-w-[210mm] hidden preview-scroll">
-            <div class="pdf-page-preview">
-                <div class="flex justify-between items-center h-40 w-full mb-4 relative z-10">
-                    <div class="w-48 h-full flex items-center"><img id="sil-l" class="h-64 w-auto object-contain"></div>
-                    <div class="flex-1 flex flex-col items-center justify-center text-center">
-                        <img src="logo_de_salvo_transparent.png" class="h-16 object-contain mb-2">
-                        <div class="font-bold text-lg text-slate-800">
+            <div id="pdf-content" class="pdf-page-render border border-slate-300 shadow-sm">
+                <img src="logo_de_salvo_transparent.png" class="watermark-bg">
+                <div class="flex justify-between items-center h-60 w-full mb-4 relative z-10">
+                    <div class="w-48 h-full flex items-center"><img id="sil-l" class="h-72 w-auto object-contain"></div>
+                    <div class="flex-1 flex flex-col items-center justify-center">
+                        <img src="logo_de_salvo_transparent.png" class="h-20 object-contain mb-2">
+                        <div class="text-center font-bold text-lg text-slate-800">
                             <span id="out-nome-completo"></span><br>
-                            <span class="text-sm font-bold text-slate-500" id="out-data"></span>
+                            <span class="text-sm font-bold text-slate-600" id="out-data"></span>
                         </div>
                     </div>
-                    <div class="w-48 h-full flex items-center justify-end"><img id="sil-r" class="h-64 w-auto object-contain"></div>
+                    <div class="w-48 h-full flex items-center justify-end"><img id="sil-r" class="h-72 w-auto object-contain"></div>
                 </div>
-                <h2 class="text-center bg-blue-600 text-white font-black text-xl py-2 mt-12 mb-4 uppercase tracking-widest">Fabbisogni Energetici</h2>
-                <div class="table-container-preview" style="background-image: url('logo_de_salvo_transparent.png'); opacity: 0.99;">
-                    <table class="table-preview">
-                        <tbody>
-                            <tr><td>BMR (Metabolismo Basale)</td><td id="out-bmr" class="text-right font-bold">-</td></tr>
-                            <tr><td>RMR (Metabolismo a Riposo)</td><td id="out-rmr" class="text-right font-bold">-</td></tr>
-                            <tr><td>TDEE (Giornaliero)</td><td id="out-tdee" class="text-right font-bold">-</td></tr>
-                            <tr><td>TDEE Settimanale</td><td id="out-tdee-sett" class="text-right font-bold">-</td></tr>
-                            <tr><td>G/CC (Densità)</td><td id="out-gcc" class="text-right font-bold">-</td></tr>
-                            <tr><td>Massa Grassa (FM)</td><td id="out-fm" class="text-right font-bold">-</td></tr>
-                            <tr><td>Massa Magra (FFM)</td><td id="out-ffm" class="text-right font-bold">-</td></tr>
-                            <tr><td>Peso Ideale (Range)</td><td id="out-ibw" class="text-right font-bold">-</td></tr>
-                            <tr><td>Kg Grasso Corporeo</td><td id="out-kg-grasso" class="text-right font-bold">-</td></tr>
-                            <tr><td>Kg Massa Magra</td><td id="out-kg-magro" class="text-right font-bold">-</td></tr>
-                            <tr><td id="label-totale-pliche">Plicometria totale</td><td id="out-totale-pliche" class="text-right font-bold">-</td></tr>
-                            <tr><td>Peso Corporeo Attuale</td><td id="out-peso-attuale" class="text-right font-bold">-</td></tr>
-                        </tbody>
-                    </table>
-                </div>
+                <h2 class="text-center bg-blue-600 text-white font-black text-2xl py-3 mt-[29mm] mb-6 uppercase tracking-widest relative z-10">Fabbisogni Energetici</h2>
+                <table class="word-table">
+                    <thead><tr><th>Parametro</th><th>Valore</th></tr></thead>
+                    <tbody>
+                        <tr><td>BMR (Metabolismo Basale)</td><td id="out-bmr" class="text-right">-</td></tr>
+                        <tr><td>RMR (Metabolismo a Riposo)</td><td id="out-rmr" class="text-right">-</td></tr>
+                        <tr><td>TDEE (Giornaliero)</td><td id="out-tdee" class="text-right">-</td></tr>
+                        <tr><td>TDEE Settimanale</td><td id="out-tdee-sett" class="text-right">-</td></tr>
+                        <tr><td>G/CC (Densità)</td><td id="out-gcc" class="text-right">-</td></tr>
+                        <tr><td>Massa Grassa (FM)</td><td id="out-fm" class="text-right">-</td></tr>
+                        <tr><td>Massa Magra (FFM)</td><td id="out-ffm" class="text-right">-</td></tr>
+                        <tr><td>Peso Ideale (Range)</td><td id="out-ibw" class="text-right">-</td></tr>
+                        <tr><td>Kg Grasso Corporeo</td><td id="out-kg-grasso" class="text-right">-</td></tr>
+                        <tr><td>Kg Massa Magra</td><td id="out-kg-magro" class="text-right">-</td></tr>
+                        <tr><td id="label-totale-pliche">Plicometria totale</td><td id="out-totale-pliche" class="text-right">-</td></tr>
+                        <tr><td>Peso Corporeo Attuale</td><td id="out-peso-attuale" class="text-right">-</td></tr>
+                    </tbody>
+                </table>
             </div>
         </div>
 
-        <!-- PREVIEW PAGINA 2 -->
+        <!-- PAGINA 2 ANTEPRIMA (Composizione Corporea) -->
         <div id="preview-container-p2" class="w-full max-w-[210mm] hidden preview-scroll">
-            <div class="pdf-page-preview">
-                <div class="flex justify-between items-center h-40 w-full mb-4 relative z-10">
-                    <div class="w-48 h-full flex items-center"><img id="elite-sil-l" class="h-64 w-auto object-contain -ml-4"></div>
-                    <div class="flex-1 flex flex-col items-center justify-center text-center">
-                        <img src="logo_de_salvo_transparent.png" class="h-16 object-contain mb-2">
-                        <div>
-                            <h1 class="bg-yellow-400 text-black font-bold px-4 py-1 text-lg border-b-4 border-black inline-block uppercase mb-1">Composizione Corporea</h1>
-                            <p class="font-bold text-md text-slate-800 mt-4" id="elite-atleta"></p>
-                            <p class="text-sm font-bold text-slate-500" id="elite-data-2"></p>
+            <div id="elite-content" class="pdf-page-render border border-slate-300 shadow-sm">
+                <div class="flex justify-between items-center h-60 w-full mb-4 relative z-10">
+                    <div class="w-48 h-full flex items-center"><img id="elite-sil-l" class="h-84 w-auto object-contain -ml-6"></div>
+                    <div class="flex-1 flex flex-col items-center justify-center">
+                        <img src="logo_de_salvo_transparent.png" class="h-20 object-contain mb-2">
+                        <div class="text-center">
+                            <h1 class="bg-yellow-400 text-black font-bold px-4 py-1 text-xl border-b-4 border-black inline-block uppercase mb-1">Composizione Corporea</h1>
+                            <p class="font-bold text-lg text-slate-800 mt-[10mm]" id="elite-atleta"></p>
+                            <p class="text-sm font-bold text-slate-600" id="elite-data-2"></p>
                         </div>
                     </div>
-                    <div class="w-48 h-full flex items-center justify-end"><img id="elite-sil-r" class="h-64 w-auto object-contain -mr-4"></div>
+                    <div class="w-48 h-full flex items-center justify-end"><img id="elite-sil-r" class="h-84 w-auto object-contain -mr-6"></div>
                 </div>
-                <div class="table-container-preview style-bg-2" style="background-image: url('logo_de_salvo_transparent.png'); opacity: 0.99; margin-top: 24px;">
-                    <table class="table-preview">
+                <div class="relative w-full mt-[20mm]">
+                    <img src="logo_de_salvo_transparent.png" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full opacity-[0.06] pointer-events-none z-0">
+                    <table class="word-table">
                         <tbody id="elite-table-body"></tbody>
                     </table>
                 </div>
-                <div class="mt-4 text-xs font-bold text-center text-slate-700">
+                <div class="mt-4 text-sm font-bold text-center">
                     <p>Plicometro: GIMA DIGITALE (modello 37320)</p>
                     <p id="elite-metodo"></p>
                     <p>Somma pliche (mm)= <span id="elite-somma-totale">-</span></p>
@@ -147,6 +150,7 @@
 
     </div>
 
+    <!-- Script Logico Conservato -->
     <script>
         let reportDataStore = {};
 
@@ -362,7 +366,7 @@
             const btnText = document.getElementById('btn-text');
             btn.disabled = true;
             btn.classList.replace('bg-emerald-600', 'bg-slate-400');
-            btnText.innerText = "⏳ Generazione in corso...";
+            btnText.innerText = "⏳ Preparazione Modello...";
 
             try {
                 const silhouettePath = reportDataStore.sesso === 'M' ? 'Siluette_Uomo.jpeg' : 'Siluette_Donna.jpeg';
@@ -387,11 +391,8 @@
                 doc.head.appendChild(script);
 
                 script.onload = function() {
-                    // Iniettiamo i watermark in formato Base64 direttamente come sfondi CSS stabili dei contenitori tabelle
-                    doc.getElementById('pdf-container-bg-1').style.backgroundImage = `url('${b64Watermark}')`;
-                    doc.getElementById('pdf-container-bg-2').style.backgroundImage = `url('${b64Watermark}')`;
-
-                    // Icone/Loghi dell'header
+                    doc.getElementById('pdf-watermark-1').src = b64Watermark;
+                    doc.getElementById('pdf-watermark-2').src = b64Watermark;
                     doc.getElementById('pdf-logo-1').src = b64Watermark;
                     doc.getElementById('pdf-logo-2').src = b64Watermark;
                     doc.getElementById('pdf-sil-l').src = b64Silhouette;
@@ -399,7 +400,6 @@
                     doc.getElementById('pdf-elite-sil-l').src = b64SilhouetteElite;
                     doc.getElementById('pdf-elite-sil-r').src = b64SilhouetteElite;
 
-                    // Campi Testuali
                     doc.getElementById('pdf-atleta-p1').innerText = reportDataStore.atletaStringa;
                     doc.getElementById('pdf-atleta-p2').innerText = reportDataStore.atletaStringa;
                     doc.getElementById('pdf-data-p1').innerText = reportDataStore.dataFormattata;
@@ -446,7 +446,7 @@
                         btnText.innerText = "📥 Scarica PDF Pronto";
                         printWindow.close();
                     }).catch(err => {
-                        console.error("Errore esportazione:", err);
+                        console.error("Errore esportazione html2pdf:", err);
                         btn.disabled = false;
                         btn.classList.replace('bg-slate-400', 'bg-emerald-600');
                         btnText.innerText = "📥 Scarica PDF Pronto";
