@@ -362,82 +362,9 @@
                 const b64Silhouette = await convertiInBase64(silhouettePath);
                 const b64SilhouetteElite = await convertiInBase64(silhouetteElitePath);
 
-                // STRUTTURA DEL TEMPLATE HTML INTEGRATA DIRETTAMENTE PER EVITARE GLI ERRORI 404 DEL FETCH
-                const templateHtml = `
-                <!DOCTYPE html>
-                <html lang="it">
-                <head>
-                    <meta charset="UTF-8">
-                    <title>Report Print Layout</title>
-                    <script src="https://cdn.tailwindcss.com"></script>
-                    <style>
-                        body { margin: 0; padding: 0; background-color: #ffffff; font-family: sans-serif; }
-                        .pdf-page { width: 210mm; height: 296.5mm; padding: 20mm; box-sizing: border-box; position: relative; overflow: hidden; background: #ffffff; page-break-after: always; }
-                        .watermark { position: absolute; top: calc(50% + 45mm); left: 50%; transform: translate(-50%, -50%); width: 75%; opacity: 0.06; pointer-events: none; z-index: 0; }
-                        .table-pdf { border-collapse: collapse; width: 100%; z-index: 10; position: relative; }
-                        .table-pdf th, .table-pdf td { border: 1px solid #cbd5e1; padding: 7px 14px; font-size: 13px; font-weight: 600; color: #1e293b; }
-                    </style>
-                </head>
-                <body>
-                    <div class="pdf-page">
-                        <img id="pdf-watermark-1" class="watermark">
-                        <div class="flex justify-between items-center h-40 w-full mb-4 relative z-10">
-                            <div class="w-48 h-full flex items-center"><img id="pdf-sil-l" class="h-64 w-auto object-contain"></div>
-                            <div class="flex-1 flex flex-col items-center justify-center text-center">
-                                <img id="pdf-logo-1" class="h-16 object-contain mb-2">
-                                <div class="font-bold text-lg text-slate-800">
-                                    <span id="pdf-atleta-p1"></span><br>
-                                    <span class="text-sm font-bold text-slate-500" id="pdf-data-p1"></span>
-                                </div>
-                            </div>
-                            <div class="w-48 h-full flex items-center justify-end"><img id="pdf-sil-r" class="h-64 w-auto object-contain"></div>
-                        </div>
-                        <h2 class="text-center bg-blue-600 text-white font-black text-xl py-2 mt-12 mb-4 uppercase tracking-widest">Fabbisogni Energetici</h2>
-                        <table class="table-pdf">
-                            <tbody>
-                                <tr><td>BMR (Metabolismo Basale)</td><td id="pdf-bmr" class="text-right font-bold">-</td></tr>
-                                <tr><td>RMR (Metabolismo a Riposo)</td><td id="pdf-rmr" class="text-right font-bold">-</td></tr>
-                                <tr><td>TDEE (Giornaliero)</td><td id="pdf-tdee" class="text-right font-bold">-</td></tr>
-                                <tr><td>TDEE Settimanale</td><td id="pdf-tdee-sett" class="text-right font-bold">-</td></tr>
-                                <tr><td>G/CC (Densità)</td><td id="pdf-gcc" class="text-right font-bold">-</td></tr>
-                                <tr><td>Massa Grassa (FM)</td><td id="pdf-fm" class="text-right font-bold">-</td></tr>
-                                <tr><td>Massa Magra (FFM)</td><td id="pdf-ffm" class="text-right font-bold">-</td></tr>
-                                <tr><td>Peso Ideale (Range)</td><td id="pdf-ibw" class="text-right font-bold">-</td></tr>
-                                <tr><td>Kg Grasso Corporeo</td><td id="pdf-kg-grasso" class="text-right font-bold">-</td></tr>
-                                <tr><td>Kg Massa Magra</td><td id="pdf-kg-magro" class="text-right font-bold">-</td></tr>
-                                <tr><td id="pdf-label-pliche">Plicometria totale</td><td id="pdf-totale-pliche" class="text-right font-bold">-</td></tr>
-                                <tr><td>Peso Corporeo Attuale</td><td id="pdf-peso-attuale" class="text-right font-bold">-</td></tr>
-                            </tbody>
-                        </table>
-                    </div>
-
-                    <div class="pdf-page">
-                        <div class="flex justify-between items-center h-40 w-full mb-4 relative z-10">
-                            <div class="w-48 h-full flex items-center"><img id="pdf-elite-sil-l" class="h-64 w-auto object-contain -ml-4"></div>
-                            <div class="flex-1 flex flex-col items-center justify-center text-center">
-                                <img id="pdf-logo-2" class="h-16 object-contain mb-2">
-                                <div>
-                                    <h1 class="bg-yellow-400 text-black font-bold px-4 py-1 text-lg border-b-4 border-black inline-block uppercase mb-1">Composizione Corporea</h1>
-                                    <p class="font-bold text-md text-slate-800 mt-4" id="pdf-atleta-p2"></p>
-                                    <p class="text-sm font-bold text-slate-500" id="pdf-data-p2"></p>
-                                </div>
-                            </div>
-                            <div class="w-48 h-full flex items-center justify-end"><img id="pdf-elite-sil-r" class="h-64 w-auto object-contain -mr-4"></div>
-                        </div>
-                        <div class="relative w-full mt-6">
-                            <img id="pdf-watermark-2" class="watermark" style="top:50%">
-                            <table class="table-pdf">
-                                <tbody id="pdf-antropometria-rows"></tbody>
-                            </table>
-                        </div>
-                        <div class="mt-4 text-xs font-bold text-center text-slate-700">
-                            <p>Plicometro: GIMA DIGITALE (modello 37320)</p>
-                            <p id="pdf-metodo"></p>
-                            <p>Somma pliche (mm)= <span id="pdf-somma-totale">-</span></p>
-                        </div>
-                    </div>
-                </body>
-                </html>`;
+                // Recuperiamo la struttura HTML del template esterno tramite fetch
+                const response = await fetch('report-template.html');
+                let templateHtml = await response.text();
 
                 // Apriamo una nuova finestra temporanea priva di relazioni CSS con il foglio corrente
                 const printWindow = window.open('', '_blank', 'width=1100,height=900');
@@ -445,6 +372,7 @@
                 printWindow.document.write(templateHtml);
                 printWindow.document.close();
 
+                // Aspettiamo che il DOM della nuova finestra sia pronto
                 const doc = printWindow.document;
                 
                 // Carichiamo la libreria html2pdf direttamente dentro la nuova finestra isolata
@@ -453,7 +381,7 @@
                 doc.head.appendChild(script);
 
                 script.onload = function() {
-                    // Iniezione dei dati sincronizzati
+                    // INIEZIONE DEI DATI DENTRO I RIGIDI CAMPI DEL NUOVO DOCUMENTO VERGINE
                     doc.getElementById('pdf-watermark-1').src = b64Watermark;
                     doc.getElementById('pdf-watermark-2').src = b64Watermark;
                     doc.getElementById('pdf-logo-1').src = b64Watermark;
@@ -504,12 +432,12 @@
                         pagebreak: { mode: ['css', 'legacy'] }
                     };
 
-                    // Esecuzione fluida ed esportazione immediata
+                    // Esecuzione fluida nel contesto isolato della nuova finestra
                     printWindow.html2pdf().set(opt).from(doc.body).save().then(() => {
                         btn.disabled = false;
                         btn.classList.replace('bg-slate-400', 'bg-emerald-600');
                         btnText.innerText = "📥 Scarica PDF Pronto";
-                        printWindow.close(); // Chiude istantaneamente la scheda di rendering a download avviato
+                        printWindow.close(); // Chiude istantaneamente la scheda di rendering
                     }).catch(err => {
                         console.error("Errore esportazione html2pdf:", err);
                         btn.disabled = false;
