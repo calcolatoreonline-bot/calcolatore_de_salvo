@@ -7,7 +7,7 @@
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
-        /* Forza stili compatibili Hex/RGB nativi sulle pagine destinate al PDF per evitare il crash di oklch */
+        /* Fogli di stile nativi purificati per html2canvas (No oklch) */
         .pdf-page-render {
             width: 210mm !important;
             height: 297mm !important;
@@ -17,19 +17,42 @@
             color: #000000 !important;
             position: relative !important;
             overflow: hidden !important;
+            font-family: Arial, sans-serif !important;
         }
 
-        /* Sovrascrittura di sicurezza per evitare che oklch di Tailwind v4 infetti le tabelle del PDF */
         .pdf-page-render * {
-            background-color: transparent !important;
             color: #000000 !important;
             border-color: #000000 !important;
+            background-image: none !important;
         }
 
-        /* Ripristino specifico per gli sfondi grafici del PDF che devono rimanere colorati */
-        .pdf-page-render h2 { background-color: #2563eb !important; color: #ffffff !important; }
-        .pdf-page-render h1 { background-color: #facc15 !important; color: #000000 !important; }
-        .pdf-page-render th { background-color: #f2f2f2 !important; color: #000000 !important; font-weight: bold !important; }
+        .pdf-page-render h2 { 
+            background-color: #2563eb !important; 
+            color: #ffffff !important; 
+            text-align: center !important;
+            font-weight: 900 !important;
+            font-size: 24px !important;
+            padding: 12px 0 !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.1em !important;
+        }
+        
+        .pdf-page-render h1 { 
+            background-color: #facc15 !important; 
+            color: #000000 !important; 
+            font-weight: bold !important;
+            padding: 4px 16px !important;
+            font-size: 20px !important;
+            border-bottom: 4px solid #000000 !important;
+            display: inline-block !important;
+            text-transform: uppercase !important;
+        }
+
+        .pdf-page-render th { 
+            background-color: #f2f2f2 !important; 
+            color: #000000 !important; 
+            font-weight: bold !important; 
+        }
 
         @media screen {
             html, body { overflow-x: hidden !important; width: 100%; }
@@ -162,6 +185,7 @@
     <script>
         function aggiornaInterfaccia() {
             const sesso = document.getElementById('in-sesso').value;
+            // Nomi allineati perfettamente alle minuscole rilevate nello screenshot di GitHub
             const imgPath = sesso === 'M' ? 'Siluette_Uomo.jpeg' : 'Siluette_Donna.jpeg';
             document.getElementById('sil-l').src = encodeURI(imgPath);
             document.getElementById('sil-r').src = encodeURI(imgPath);
@@ -296,6 +320,7 @@
             document.getElementById('label-totale-pliche').innerText = (sesso === 'M') ? "Plicometria totale (7 pliche):" : "Plicometria totale (3 pliche):";
             document.getElementById('out-peso-attuale').innerText = !isNaN(peso) ? peso.toFixed(2).replace('.', ',') + " kg" : "-";
 
+            // Allineamento nomi file grafiche Elite ricontrollati da screenshot GitHub (.JPEG in maiuscolo)
             document.getElementById('elite-sil-l').src = sesso === 'M' ? 'COMPOSIZIONE CORPOREA UOMO.JPEG' : 'COMPOSIZIONE CORPOREA DONNA.JPEG';
             document.getElementById('elite-sil-r').src = sesso === 'M' ? 'COMPOSIZIONE CORPOREA UOMO.JPEG' : 'COMPOSIZIONE CORPOREA DONNA.JPEG';
             document.getElementById('elite-atleta').innerText = atletaStringa;
@@ -375,8 +400,8 @@
                     }
                 };
                 img.onerror = function() {
-                    console.warn("Impossibile caricare la risorsa immagine:", imgElement.src);
-                    resolve(''); // Fallback vuoto in caso di 404 per non bloccare lo script
+                    console.warn("Impossibile caricare l'immagine:", imgElement.src);
+                    resolve(''); 
                 };
             });
         }
@@ -414,6 +439,29 @@
                 for (let img of immaginiPagina2) {
                     img.src = await toBase64(img);
                 }
+
+                // PURIFICAZIONE TOTALE DALLE CLASSI TAILWIND V4
+                // Rimuovendo le classi Tailwind dai nodi clonati che vanno al canvas,
+                // azzeriamo l'ereditarietà di oklch() che causava il crash.
+                const rimuoviClassiTailwind = (elemento) => {
+                    elemento.removeAttribute('class');
+                    const figli = elemento.querySelectorAll('*');
+                    figli.forEach(figlio => {
+                        // Manteniamo solo le classi strutturali che servono ai nostri fogli di stile isolati
+                        if (!figlio.classList.contains('pdf-page-render') && 
+                            !figlio.classList.contains('watermark-bg') && 
+                            !figlio.classList.contains('word-table')) {
+                            figlio.removeAttribute('class');
+                        }
+                    });
+                };
+
+                rimuoviClassiTailwind(page1);
+                rimuoviClassiTailwind(page2);
+                
+                // Forziamo esplicitamente la classe di stile nativo isolata
+                page1.className = "pdf-page-render";
+                page2.className = "pdf-page-render";
 
                 const pageBreak = document.createElement('div');
                 pageBreak.className = 'html2pdf__page-break';
