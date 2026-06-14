@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dott. Valentino De Salvo - Report Analisi Completo</title>
+    <!-- Tailwind v4 per la UI applicativa locale -->
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <style>
         @media screen {
@@ -25,13 +26,20 @@
                 -webkit-overflow-scrolling: touch;
             }
         }
-        .watermark-preview { position: absolute; top: 58%; left: 50%; transform: translate(-50%, -50%); width: 70%; opacity: 0.05; pointer-events: none; z-index: 0; }
-        .table-preview { border-collapse: collapse; width: 100%; z-index: 10; position: relative; }
-        .table-preview th, .table-preview td { border: 1px solid #cbd5e1; padding: 6px 12px; font-size: 13px; }
+        .table-container-preview {
+            position: relative;
+            width: 100%;
+            background-repeat: no-repeat;
+            background-position: center center;
+            background-size: 82% auto;
+        }
+        .table-preview { border-collapse: collapse; width: 100%; z-index: 10; position: relative; background: transparent; }
+        .table-preview th, .table-preview td { border: 1px solid #cbd5e1; padding: 6px 12px; font-size: 13px; background: rgba(255, 255, 255, 0.15); }
     </style>
 </head>
 <body class="bg-slate-100 p-4 md:p-8">
 
+    <!-- Pannello UI di Configurazione Dati -->
     <div id="interface-ui" class="max-w-4xl mx-auto bg-white p-4 md:p-8 rounded-xl shadow-lg border border-slate-200 mb-10">
         <h1 class="text-xl font-bold mb-6 text-slate-800 border-b pb-2">Configurazione Paziente</h1>
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
@@ -64,6 +72,7 @@
         </button>
     </div>
 
+    <!-- Area delle Preview a Schermo -->
     <div id="preview-block-completo" class="w-full flex flex-col gap-10 items-center">
         
         <div id="action-bar" class="hidden w-full max-w-[210mm] flex justify-center gap-4 mb-6">
@@ -72,9 +81,9 @@
             </button>
         </div>
 
+        <!-- PREVIEW PAGINA 1 -->
         <div id="preview-container-p1" class="w-full max-w-[210mm] hidden preview-scroll">
             <div class="pdf-page-preview">
-                <img src="logo_de_salvo_transparent.png" class="watermark-preview">
                 <div class="flex justify-between items-center h-40 w-full mb-4 relative z-10">
                     <div class="w-48 h-full flex items-center"><img id="sil-l" class="h-64 w-auto object-contain"></div>
                     <div class="flex-1 flex flex-col items-center justify-center text-center">
@@ -87,28 +96,30 @@
                     <div class="w-48 h-full flex items-center justify-end"><img id="sil-r" class="h-64 w-auto object-contain"></div>
                 </div>
                 <h2 class="text-center bg-blue-600 text-white font-black text-xl py-2 mt-12 mb-4 uppercase tracking-widest">Fabbisogni Energetici</h2>
-                <table class="table-preview">
-                    <tbody>
-                        <tr><td>BMR (Metabolismo Basale)</td><td id="out-bmr" class="text-right font-bold">-</td></tr>
-                        <tr><td>RMR (Metabolismo a Riposo)</td><td id="out-rmr" class="text-right font-bold">-</td></tr>
-                        <tr><td>TDEE (Giornaliero)</td><td id="out-tdee" class="text-right font-bold">-</td></tr>
-                        <tr><td>TDEE Settimanale</td><td id="out-tdee-sett" class="text-right font-bold">-</td></tr>
-                        <tr><td>G/CC (Densità)</td><td id="out-gcc" class="text-right font-bold">-</td></tr>
-                        <tr><td>Massa Grassa (FM)</td><td id="out-fm" class="text-right font-bold">-</td></tr>
-                        <tr><td>Massa Magra (FFM)</td><td id="out-ffm" class="text-right font-bold">-</td></tr>
-                        <tr><td>Peso Ideale (Range)</td><td id="out-ibw" class="text-right font-bold">-</td></tr>
-                        <tr><td>Kg Grasso Corporeo</td><td id="out-kg-grasso" class="text-right font-bold">-</td></tr>
-                        <tr><td>Kg Massa Magra</td><td id="out-kg-magro" class="text-right font-bold">-</td></tr>
-                        <tr><td id="label-totale-pliche">Plicometria totale</td><td id="out-totale-pliche" class="text-right font-bold">-</td></tr>
-                        <tr><td>Peso Corporeo Attuale</td><td id="out-peso-attuale" class="text-right font-bold">-</td></tr>
-                    </tbody>
-                </table>
+                <div class="table-container-preview" style="background-image: url('logo_de_salvo_transparent.png'); opacity: 0.99;">
+                    <table class="table-preview">
+                        <tbody>
+                            <tr><td>BMR (Metabolismo Basale)</td><td id="out-bmr" class="text-right font-bold">-</td></tr>
+                            <tr><td>RMR (Metabolismo a Riposo)</td><td id="out-rmr" class="text-right font-bold">-</td></tr>
+                            <tr><td>TDEE (Giornaliero)</td><td id="out-tdee" class="text-right font-bold">-</td></tr>
+                            <tr><td>TDEE Settimanale</td><td id="out-tdee-sett" class="text-right font-bold">-</td></tr>
+                            <tr><td>G/CC (Densità)</td><td id="out-gcc" class="text-right font-bold">-</td></tr>
+                            <tr><td>Massa Grassa (FM)</td><td id="out-fm" class="text-right font-bold">-</td></tr>
+                            <tr><td>Massa Magra (FFM)</td><td id="out-ffm" class="text-right font-bold">-</td></tr>
+                            <tr><td>Peso Ideale (Range)</td><td id="out-ibw" class="text-right font-bold">-</td></tr>
+                            <tr><td>Kg Grasso Corporeo</td><td id="out-kg-grasso" class="text-right font-bold">-</td></tr>
+                            <tr><td>Kg Massa Magra</td><td id="out-kg-magro" class="text-right font-bold">-</td></tr>
+                            <tr><td id="label-totale-pliche">Plicometria totale</td><td id="out-totale-pliche" class="text-right font-bold">-</td></tr>
+                            <tr><td>Peso Corporeo Attuale</td><td id="out-peso-attuale" class="text-right font-bold">-</td></tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
 
+        <!-- PREVIEW PAGINA 2 -->
         <div id="preview-container-p2" class="w-full max-w-[210mm] hidden preview-scroll">
             <div class="pdf-page-preview">
-                <img src="logo_de_salvo_transparent.png" class="watermark-preview">
                 <div class="flex justify-between items-center h-40 w-full mb-4 relative z-10">
                     <div class="w-48 h-full flex items-center"><img id="elite-sil-l" class="h-64 w-auto object-contain -ml-4"></div>
                     <div class="flex-1 flex flex-col items-center justify-center text-center">
@@ -121,7 +132,7 @@
                     </div>
                     <div class="w-48 h-full flex items-center justify-end"><img id="elite-sil-r" class="h-64 w-auto object-contain -mr-4"></div>
                 </div>
-                <div class="relative w-full mt-6">
+                <div class="table-container-preview style-bg-2" style="background-image: url('logo_de_salvo_transparent.png'); opacity: 0.99; margin-top: 24px;">
                     <table class="table-preview">
                         <tbody id="elite-table-body"></tbody>
                     </table>
@@ -364,7 +375,6 @@
                 const response = await fetch('report-template.html');
                 let templateHtml = await response.text();
 
-                // Apertura contesto isolato
                 const printWindow = window.open('', '_blank', 'width=1100,height=900');
                 printWindow.document.open();
                 printWindow.document.write(templateHtml);
@@ -377,9 +387,11 @@
                 doc.head.appendChild(script);
 
                 script.onload = function() {
-                    // Iniezione Base64 Grafiche e Sfondi
-                    doc.getElementById('pdf-watermark-1').src = b64Watermark;
-                    doc.getElementById('pdf-watermark-2').src = b64Watermark;
+                    // Iniettiamo i watermark in formato Base64 direttamente come sfondi CSS stabili dei contenitori tabelle
+                    doc.getElementById('pdf-container-bg-1').style.backgroundImage = `url('${b64Watermark}')`;
+                    doc.getElementById('pdf-container-bg-2').style.backgroundImage = `url('${b64Watermark}')`;
+
+                    // Icone/Loghi dell'header
                     doc.getElementById('pdf-logo-1').src = b64Watermark;
                     doc.getElementById('pdf-logo-2').src = b64Watermark;
                     doc.getElementById('pdf-sil-l').src = b64Silhouette;
@@ -387,7 +399,7 @@
                     doc.getElementById('pdf-elite-sil-l').src = b64SilhouetteElite;
                     doc.getElementById('pdf-elite-sil-r').src = b64SilhouetteElite;
 
-                    // Iniezione Campi Testuali
+                    // Campi Testuali
                     doc.getElementById('pdf-atleta-p1').innerText = reportDataStore.atletaStringa;
                     doc.getElementById('pdf-atleta-p2').innerText = reportDataStore.atletaStringa;
                     doc.getElementById('pdf-data-p1').innerText = reportDataStore.dataFormattata;
@@ -411,7 +423,6 @@
                     doc.getElementById('pdf-metodo').innerText = reportDataStore.sesso === 'M' ? 'Metodo: Jackson & Pollock / 7 pliche' : 'Metodo: Jackson & Pollock / 3 pliche';
                     doc.getElementById('pdf-somma-totale').innerText = reportDataStore.haPliche ? reportDataStore.sommaPliche.toFixed(2).replace('.', ',') : '-';
 
-                    // Forza refresh layout prima dello scatto grafico
                     doc.body.offsetHeight;
 
                     const nomeFile = "Composizione corporea e Fabbisogni energetici " + reportDataStore.dataFormattata;
