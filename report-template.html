@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <title>Stampa Report</title>
+    <style>
+        body { margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #ffffff; color: #000000; }
+        .page-a4 {
+            width: 210mm;
+            height: 297mm;
+            padding: 20mm;
+            box-sizing: border-box;
+            position: relative;
+            overflow: hidden;
+            background-color: #ffffff;
+        }
+        .watermark {
+            position: absolute;
+            top: 60%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 75%;
+            opacity: 0.06;
+            z-index: 0;
+        }
+        .header-row { display: table; width: 100%; height: 160px; margin-bottom: 16px; position: relative; z-index: 10; }
+        .header-cell { display: table-cell; vertical-align: middle; }
+        .title-p1 {
+            background-color: #2563eb;
+            color: #ffffff;
+            text-align: center;
+            font-weight: 900;
+            font-size: 24px;
+            padding: 12px 0;
+            text-transform: uppercase;
+            margin-top: 25mm;
+            margin-bottom: 24px;
+        }
+        .title-p2 {
+            background-color: #facc15;
+            color: #000000;
+            font-weight: bold;
+            padding: 4px 16px;
+            font-size: 20px;
+            border-bottom: 4px solid #000000;
+            display: inline-block;
+            text-transform: uppercase;
+            margin-bottom: 4px;
+        }
+        .word-table { border-collapse: collapse; width: 100%; z-index: 10; position: relative; margin-top: 20px; }
+        .word-table th, .word-table td { border: 1px solid #000000; padding: 6px 12px; font-size: 13px; }
+        .word-table th { background-color: #f2f2f2; font-weight: bold; }
+        .text-right { text-align: right; }
+        .text-center { text-align: center; }
+        .page-break { page-break-after: always; }
+    </style>
+</head>
+<body>
+
+    <div class="page-a4 page-break">
+        <img id="pdf-watermark-1" class="watermark">
+        <div class="header-row">
+            <div class="header-cell" style="width: 192px;"><img id="pdf-sil-l" style="height: 240px; width: auto;"></div>
+            <div class="header-cell text-center">
+                <img id="pdf-logo-1" style="height: 80px; margin-bottom: 8px;">
+                <div style="font-weight: bold; font-size: 18px; color: #1e293b;">
+                    <span id="pdf-atleta-p1"></span><br>
+                    <span style="font-size: 14px; color: #475569;" id="pdf-data-p1"></span>
+                </div>
+            </div>
+            <div class="header-cell text-right" style="width: 192px;"><img id="pdf-sil-r" style="height: 240px; width: auto;"></div>
+        </div>
+        
+        <div class="title-p1">Fabbisogni Energetici</div>
+        
+        <table class="word-table">
+            <thead>
+                <tr><th>Parametro</th><th class="text-right">Valore</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>BMR (Metabolismo Basale)</td><td class="text-right" id="pdf-bmr">-</td></tr>
+                <tr><td>RMR (Metabolismo a Riposo)</td><td class="text-right" id="pdf-rmr">-</td></tr>
+                <tr><td>TDEE (Giornaliero)</td><td class="text-right" id="pdf-tdee">-</td></tr>
+                <tr><td>TDEE Settimanale</td><td class="text-right" id="pdf-tdee-sett">-</td></tr>
+                <tr><td>G/CC (Densità)</td><td class="text-right" id="pdf-gcc">-</td></tr>
+                <tr><td>Massa Grassa (FM)</td><td class="text-right" id="pdf-fm">-</td></tr>
+                <tr><td>Massa Magra (FFM)</td><td class="text-right" id="pdf-ffm">-</td></tr>
+                <tr><td>Peso Ideale (Range)</td><td class="text-right" id="pdf-ibw">-</td></tr>
+                <tr><td>Kg Grasso Corporeo</td><td class="text-right" id="pdf-kg-grasso">-</td></tr>
+                <tr><td>Kg Massa Magra</td><td class="text-right" id="pdf-kg-magro">-</td></tr>
+                <tr><td id="pdf-label-pliche">Plicometria totale</td><td class="text-right" id="pdf-totale-pliche">-</td></tr>
+                <tr><td>Peso Corporeo Attuale</td><td class="text-right" id="pdf-peso-attuale">-</td></tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div class="page-a4">
+        <div class="header-row">
+            <div class="header-cell" style="width: 192px;"><img id="pdf-elite-sil-l" style="height: 260px; margin-left: -24px;"></div>
+            <div class="header-cell text-center">
+                <img id="pdf-logo-2" style="height: 80px; margin-bottom: 8px;">
+                <div class="title-p2">Composizione Corporea</div>
+                <div style="font-weight: bold; font-size: 18px; color: #1e293b; margin-top: 25px;">
+                    <span id="pdf-atleta-p2"></span><br>
+                    <span style="font-size: 14px; color: #475569;" id="pdf-data-p2"></span>
+                </div>
+            </div>
+            <div class="header-cell text-right" style="width: 192px;"><img id="pdf-elite-sil-r" style="height: 260px; margin-right: -24px;"></div>
+        </div>
+        
+        <div style="position: relative; width: 100%; margin-top: 40px;">
+            <img id="pdf-watermark-2" class="watermark" style="top: 50%;">
+            <table class="word-table">
+                <tbody style="font-weight: bold;" id="pdf-antropometria-rows">
+                    </tbody>
+            </table>
+        </div>
+        <div class="text-center" style="margin-top: 24px; font-size: 14px; font-weight: bold;">
+            <p>Plicometro: GIMA DIGITALE (modello 37320)</p>
+            <p id="pdf-metodo"></p>
+            <p>Somma pliche (mm)= <span id="pdf-somma-totale">-</span></p>
+        </div>
+    </div>
+
+</body>
+</html>
