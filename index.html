@@ -354,104 +354,116 @@
             btn.classList.replace('bg-emerald-600', 'bg-slate-400');
             btnText.innerText = "⏳ Preparazione Modello...";
 
+            // Contenitore nascosto per il rendering inline (compatibile mobile/Safari)
+            let renderContainer = document.getElementById('pdf-render-container');
+            if (!renderContainer) {
+                renderContainer = document.createElement('div');
+                renderContainer.id = 'pdf-render-container';
+                renderContainer.style.cssText = 'position:fixed;left:-9999px;top:0;width:210mm;z-index:-1;pointer-events:none;';
+                document.body.appendChild(renderContainer);
+            }
+
             try {
                 const silhouettePath = reportDataStore.sesso === 'M' ? 'Siluette_Uomo.jpeg' : 'Siluette_Donna.jpeg';
                 const silhouetteElitePath = reportDataStore.sesso === 'M' ? 'COMPOSIZIONE CORPOREA UOMO.JPEG' : 'COMPOSIZIONE CORPOREA DONNA.JPEG';
-                
+
                 const b64Watermark = await convertiInBase64('logo_de_salvo_transparent.png');
                 const b64Silhouette = await convertiInBase64(silhouettePath);
                 const b64SilhouetteElite = await convertiInBase64(silhouetteElitePath);
 
-                // Recuperiamo la struttura HTML del template esterno tramite fetch
+                // Fetch del template e iniezione nel div nascosto inline (nessun popup)
                 const response = await fetch('report-template.html');
-                let templateHtml = await response.text();
+                const templateHtml = await response.text();
 
-                // Apriamo una nuova finestra temporanea priva di relazioni CSS con il foglio corrente
-                const printWindow = window.open('', '_blank', 'width=1100,height=900');
-                printWindow.document.open();
-                printWindow.document.write(templateHtml);
-                printWindow.document.close();
+                // Estraiamo solo il contenuto del body dal template
+                const parser = new DOMParser();
+                const templateDoc = parser.parseFromString(templateHtml, 'text/html');
 
-                // Aspettiamo che il DOM della nuova finestra sia pronto
-                const doc = printWindow.document;
-                
-                // Carichiamo la libreria html2pdf direttamente dentro la nuova finestra isolata
-                const script = doc.createElement('script');
-                script.src = "https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js";
-                doc.head.appendChild(script);
+                // Iniettiamo anche gli stili del template nel documento corrente (se non già presenti)
+                const styleId = 'pdf-template-styles';
+                if (!document.getElementById(styleId)) {
+                    const templateStyle = document.createElement('style');
+                    templateStyle.id = styleId;
+                    templateStyle.textContent = Array.from(templateDoc.querySelectorAll('style')).map(s => s.textContent).join('\n');
+                    document.head.appendChild(templateStyle);
+                }
 
-                script.onload = function() {
-                    // INIEZIONE DEI DATI DENTRO I RIGIDI CAMPI DEL NUOVO DOCUMENTO VERGINE
-                    doc.getElementById('pdf-watermark-1').src = b64Watermark;
-                    doc.getElementById('pdf-watermark-2').src = b64Watermark;
-                    doc.getElementById('pdf-logo-1').src = b64Watermark;
-                    doc.getElementById('pdf-logo-2').src = b64Watermark;
-                    doc.getElementById('pdf-sil-l').src = b64Silhouette;
-                    doc.getElementById('pdf-sil-r').src = b64Silhouette;
-                    doc.getElementById('pdf-elite-sil-l').src = b64SilhouetteElite;
-                    doc.getElementById('pdf-elite-sil-r').src = b64SilhouetteElite;
+                renderContainer.innerHTML = templateDoc.body.innerHTML;
 
-                    doc.getElementById('pdf-atleta-p1').innerText = reportDataStore.atletaStringa;
-                    doc.getElementById('pdf-atleta-p2').innerText = reportDataStore.atletaStringa;
-                    doc.getElementById('pdf-data-p1').innerText = reportDataStore.dataFormattata;
-                    doc.getElementById('pdf-data-p2').innerText = reportDataStore.dataFormattata;
+                // Iniezione dati
+                const d = renderContainer;
+                d.querySelector('#pdf-watermark-1').src = b64Watermark;
+                d.querySelector('#pdf-watermark-2').src = b64Watermark;
+                d.querySelector('#pdf-logo-1').src = b64Watermark;
+                d.querySelector('#pdf-logo-2').src = b64Watermark;
+                d.querySelector('#pdf-sil-l').src = b64Silhouette;
+                d.querySelector('#pdf-sil-r').src = b64Silhouette;
+                d.querySelector('#pdf-elite-sil-l').src = b64SilhouetteElite;
+                d.querySelector('#pdf-elite-sil-r').src = b64SilhouetteElite;
 
-                    doc.getElementById('pdf-bmr').innerText = reportDataStore.metrics.bmr;
-                    doc.getElementById('pdf-rmr').innerText = reportDataStore.metrics.rmr;
-                    doc.getElementById('pdf-tdee').innerText = reportDataStore.metrics.tdee;
-                    doc.getElementById('pdf-tdee-sett').innerText = reportDataStore.metrics.tdeeSett;
-                    doc.getElementById('pdf-gcc').innerText = reportDataStore.metrics.gcc;
-                    doc.getElementById('pdf-fm').innerText = reportDataStore.metrics.fm;
-                    doc.getElementById('pdf-ffm').innerText = reportDataStore.metrics.ffm;
-                    doc.getElementById('pdf-ibw').innerText = reportDataStore.metrics.ibw;
-                    doc.getElementById('pdf-kg-grasso').innerText = reportDataStore.metrics.kgGrasso;
-                    doc.getElementById('pdf-kg-magro').innerText = reportDataStore.metrics.kgMagro;
-                    doc.getElementById('pdf-totale-pliche').innerText = reportDataStore.metrics.totalePliche;
-                    doc.getElementById('pdf-peso-attuale').innerText = reportDataStore.metrics.pesoAttuale;
-                    doc.getElementById('pdf-label-pliche').innerText = (reportDataStore.sesso === 'M') ? "Plicometria totale (7 pliche):" : "Plicometria totale (3 pliche):";
+                d.querySelector('#pdf-atleta-p1').innerText = reportDataStore.atletaStringa;
+                d.querySelector('#pdf-atleta-p2').innerText = reportDataStore.atletaStringa;
+                d.querySelector('#pdf-data-p1').innerText = reportDataStore.dataFormattata;
+                d.querySelector('#pdf-data-p2').innerText = reportDataStore.dataFormattata;
 
-                    doc.getElementById('pdf-antropometria-rows').innerHTML = reportDataStore.rowsHtml;
-                    doc.getElementById('pdf-metodo').innerText = reportDataStore.sesso === 'M' ? 'Metodo: Jackson & Pollock / 7 pliche' : 'Metodo: Jackson & Pollock / 3 pliche';
-                    doc.getElementById('pdf-somma-totale').innerText = reportDataStore.haPliche ? reportDataStore.sommaPliche.toFixed(2).replace('.', ',') : '-';
+                d.querySelector('#pdf-bmr').innerText = reportDataStore.metrics.bmr;
+                d.querySelector('#pdf-rmr').innerText = reportDataStore.metrics.rmr;
+                d.querySelector('#pdf-tdee').innerText = reportDataStore.metrics.tdee;
+                d.querySelector('#pdf-tdee-sett').innerText = reportDataStore.metrics.tdeeSett;
+                d.querySelector('#pdf-gcc').innerText = reportDataStore.metrics.gcc;
+                d.querySelector('#pdf-fm').innerText = reportDataStore.metrics.fm;
+                d.querySelector('#pdf-ffm').innerText = reportDataStore.metrics.ffm;
+                d.querySelector('#pdf-ibw').innerText = reportDataStore.metrics.ibw;
+                d.querySelector('#pdf-kg-grasso').innerText = reportDataStore.metrics.kgGrasso;
+                d.querySelector('#pdf-kg-magro').innerText = reportDataStore.metrics.kgMagro;
+                d.querySelector('#pdf-totale-pliche').innerText = reportDataStore.metrics.totalePliche;
+                d.querySelector('#pdf-peso-attuale').innerText = reportDataStore.metrics.pesoAttuale;
+                d.querySelector('#pdf-label-pliche').innerText = (reportDataStore.sesso === 'M') ? "Plicometria totale (7 pliche):" : "Plicometria totale (3 pliche):";
 
-                    // Forza l'aggiornamento grafico strutturale
-                    doc.body.offsetHeight;
+                d.querySelector('#pdf-antropometria-rows').innerHTML = reportDataStore.rowsHtml;
+                d.querySelector('#pdf-metodo').innerText = reportDataStore.sesso === 'M' ? 'Metodo: Jackson & Pollock / 7 pliche' : 'Metodo: Jackson & Pollock / 3 pliche';
+                d.querySelector('#pdf-somma-totale').innerText = reportDataStore.haPliche ? reportDataStore.sommaPliche.toFixed(2).replace('.', ',') : '-';
 
-                    const nomeFile = "Composizione corporea e Fabbisogni energetici " + reportDataStore.dataFormattata;
-                    const opt = {
-                        margin: 0,
-                        filename: nomeFile + '.pdf',
-                        image: { type: 'jpeg', quality: 0.98 },
-                        html2canvas: { 
-                            scale: 2, 
-                            useCORS: true, 
-                            backgroundColor: '#ffffff', 
-                            logging: false
-                        },
-                        jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-                        pagebreak: { mode: ['css', 'legacy'] }
-                    };
+                // Attendiamo che le immagini siano caricate prima di renderizzare
+                const images = Array.from(d.querySelectorAll('img'));
+                await Promise.all(images.map(img => new Promise(resolve => {
+                    if (img.complete) resolve();
+                    else { img.onload = resolve; img.onerror = resolve; }
+                })));
 
-                    // Esecuzione fluida nel contesto isolato della nuova finestra
-                    printWindow.html2pdf().set(opt).from(doc.body).save().then(() => {
-                        btn.disabled = false;
-                        btn.classList.replace('bg-slate-400', 'bg-emerald-600');
-                        btnText.innerText = "📥 Scarica PDF Pronto";
-                        printWindow.close(); // Chiude istantaneamente la scheda di rendering
-                    }).catch(err => {
-                        console.error("Errore esportazione html2pdf:", err);
-                        btn.disabled = false;
-                        btn.classList.replace('bg-slate-400', 'bg-emerald-600');
-                        btnText.innerText = "📥 Scarica PDF Pronto";
-                        printWindow.close();
-                    });
+                // Piccolo delay per sicurezza layout
+                await new Promise(r => setTimeout(r, 300));
+
+                btnText.innerText = "⏳ Generazione PDF...";
+
+                const nomeFile = "Composizione corporea e Fabbisogni energetici " + reportDataStore.dataFormattata;
+                const opt = {
+                    margin: 0,
+                    filename: nomeFile + '.pdf',
+                    image: { type: 'jpeg', quality: 0.98 },
+                    html2canvas: {
+                        scale: 2,
+                        useCORS: true,
+                        backgroundColor: '#ffffff',
+                        logging: false
+                    },
+                    jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+                    pagebreak: { mode: ['css', 'legacy'] }
                 };
+
+                await html2pdf().set(opt).from(renderContainer).save();
+
+                btn.disabled = false;
+                btn.classList.replace('bg-slate-400', 'bg-emerald-600');
+                btnText.innerText = "📥 Scarica PDF Pronto";
+                renderContainer.innerHTML = '';
 
             } catch (error) {
                 console.error("Errore logico:", error);
                 btn.disabled = false;
                 btn.classList.replace('bg-slate-400', 'bg-emerald-600');
                 btnText.innerText = "📥 Scarica PDF Pronto";
+                renderContainer.innerHTML = '';
             }
         }
 
