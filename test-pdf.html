@@ -2,7 +2,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>Test Isolato html2pdf - Rimozione Immagini Diagnostica</title>
+    <title>Test Isolato html2pdf - Soluzione Definitiva Base64</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         .pagina-a4 {
@@ -20,14 +20,14 @@
 
     <div style="margin-bottom: 20px; text-align: center;">
         <button id="btn-esporta" onclick="scaricaPDFClientSide()" style="padding: 10px 20px; font-size: 16px; background-color: #059669; color: white; border: none; border-radius: 5px; cursor: pointer;">
-            📥 Clicca qui per testare il PDF (Senza Immagini)
+            📥 Clicca qui per scaricare il PDF Completo con Logo
         </button>
     </div>
 
     <div id="pdf-content" class="pagina-a4">
         <h1>PRIMA PAGINA</h1>
         <p>Questo è un testo di test per la pagina 1.</p>
-        <img src="logo_de_salvo_transparent.png" style="width: 150px; margin-top: 20px;" alt="[Logo Test]">
+        <img id="logo-test" src="logo_de_salvo_transparent.png" style="width: 150px; margin-top: 20px;" alt="[Logo Test]">
     </div>
 
     <div id="elite-content" class="pagina-a4">
@@ -46,10 +46,45 @@
     </div>
 
     <script>
-        function scaricaPDFClientSide() {
+        // Funzione Helper asincrona per convertire al volo qualsiasi URL immagine in stringa Base64 sicura per il Canvas
+        function toBase64(imgElement) {
+            return new Promise((resolve) => {
+                // Se è già in base64 o non è valida, saltiamo la conversione
+                if (!imgElement || imgElement.src.startsWith('data:')) {
+                    resolve(imgElement ? imgElement.src : '');
+                    return;
+                }
+                
+                const img = new Image();
+                img.crossOrigin = 'Anonymous'; // Forza lo sblocco CORS lato client se supportato
+                img.src = imgElement.src;
+                
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = img.naturalWidth;
+                    canvas.height = img.naturalHeight;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0);
+                    try {
+                        // Estraiamo i dati in formato PNG nativo
+                        const dataURL = canvas.toDataURL('image/png');
+                        resolve(dataURL);
+                    } catch (e) {
+                        console.error("Errore esportazione Canvas:", e);
+                        resolve(imgElement.src); // Fallback all'originale in caso di blocco severo
+                    }
+                };
+                
+                img.onerror = function() {
+                    resolve(imgElement.src);
+                };
+            });
+        }
+
+        async function scaricaPDFClientSide() {
             const btn = document.getElementById('btn-esporta');
             btn.disabled = true;
-            btn.innerText = "⏳ Generazione PDF...";
+            btn.innerText = "⏳ Elaborazione Grafica e PDF...";
 
             try {
                 const tempWrapper = document.createElement('div');
@@ -57,13 +92,16 @@
                 tempWrapper.style.width = '210mm';
                 tempWrapper.style.backgroundColor = '#ffffff';
                 
+                // Clona i nodi della pagina originale
                 const page1 = document.getElementById('pdf-content').cloneNode(true);
                 const page2 = document.getElementById('elite-content').cloneNode(true);
                 
-                // RIMOZIONE DIAGNOSTICA DELLE IMMAGINI SOLO DAL CLONE
-                // Cerchiamo tutti i tag <img> all'interno dei cloni e li distruggiamo
-                page1.querySelectorAll('img').forEach(img => img.remove());
-                page2.querySelectorAll('img').forEach(img => img.remove());
+                // 🚀 CONVERSIONE AUTOMATICA DELLE IMMAGINI DEL CLONE IN BASE64
+                const cloneImages = page1.querySelectorAll('img');
+                for (let img of cloneImages) {
+                    const base64Src = await toBase64(img);
+                    img.src = base64Src; // Ora l'immagine del clone è testo puro al 100%!
+                }
 
                 const pageBreak = document.createElement('div');
                 pageBreak.className = 'html2pdf__page-break';
@@ -76,12 +114,12 @@
 
                 const opt = {
                     margin: 0,
-                    filename: 'test-diagnostico-testo.pdf',
+                    filename: 'test-grafica-funzionante.pdf',
                     image: { type: 'jpeg', quality: 0.98 },
                     html2canvas: { 
                         scale: 2, 
                         useCORS: true, 
-                        allowTaint: false, // Rigorosamente false per evitare contaminazioni latenti
+                        allowTaint: false, // Lasciamo rigorosamente false per sfruttare la pulizia del Base64
                         backgroundColor: '#ffffff',
                         logging: false
                     },
@@ -92,13 +130,13 @@
                 html2pdf().set(opt).from(tempWrapper).save().then(() => {
                     document.body.removeChild(tempWrapper);
                     btn.disabled = false;
-                    btn.innerText = "📥 Clicca qui per testare il PDF (Senza Immagini)";
-                    console.log("PDF generato con successo!");
+                    btn.innerText = "📥 Clicca qui per scaricare il PDF Completo con Logo";
+                    console.log("PDF grafico generato con successo!");
                 }).catch(err => {
                     console.error("Errore durante il salvataggio:", err);
                     if (document.body.contains(tempWrapper)) document.body.removeChild(tempWrapper);
                     btn.disabled = false;
-                    btn.innerText = "❌ Errore (Vedi Console)";
+                    btn.innerText = "❌ Errore di Scatto";
                 });
 
             } catch (error) {
