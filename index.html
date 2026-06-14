@@ -4,10 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dott. Valentino De Salvo - Report Analisi Completo</title>
+    <!-- Tailwind v4 gestisce solo l'interfaccia a schermo -->
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
-        /* Fogli di stile nativi purificati per html2canvas (No oklch) */
+        /* Fogli di stile vecchio stile (No oklch) specifici per le pagine del PDF */
         .pdf-page-render {
             width: 210mm !important;
             height: 297mm !important;
@@ -20,13 +21,13 @@
             font-family: Arial, sans-serif !important;
         }
 
-        .pdf-page-render * {
-            color: #000000 !important;
-            border-color: #000000 !important;
-            background-image: none !important;
+        /* Forza la rimozione di sfondi complessi ereditati per il motore di rendering */
+        .pdf-page-render, .pdf-page-render * {
+            box-shadow: none !important;
+            text-shadow: none !important;
         }
 
-        .pdf-page-render h2 { 
+        .pdf-page-render h2.pdf-header-title { 
             background-color: #2563eb !important; 
             color: #ffffff !important; 
             text-align: center !important;
@@ -35,9 +36,11 @@
             padding: 12px 0 !important;
             text-transform: uppercase !important;
             letter-spacing: 0.1em !important;
+            margin-top: 29mm !important;
+            margin-bottom: 24px !important;
         }
         
-        .pdf-page-render h1 { 
+        .pdf-page-render h1.pdf-elite-title { 
             background-color: #facc15 !important; 
             color: #000000 !important; 
             font-weight: bold !important;
@@ -46,12 +49,7 @@
             border-bottom: 4px solid #000000 !important;
             display: inline-block !important;
             text-transform: uppercase !important;
-        }
-
-        .pdf-page-render th { 
-            background-color: #f2f2f2 !important; 
-            color: #000000 !important; 
-            font-weight: bold !important; 
+            margin-bottom: 4px !important;
         }
 
         @media screen {
@@ -69,15 +67,17 @@
         }
 
         .watermark-bg { position: absolute; top: calc(50% + 45mm); left: 50%; transform: translate(-50%, -50%); width: 75%; opacity: 0.06; pointer-events: none; z-index: 0; }
-        .word-table { border-collapse: collapse; width: 100%; z-index: 10; position: relative; }
-        .word-table th, .word-table td { border: 1px solid #000000 !important; padding: 6px 12px !important; font-family: Arial, sans-serif !important; font-size: 13px !important; }
+        .word-table { border-collapse: collapse; width: 100%; z-index: 10; position: relative; background-color: #ffffff !important; }
+        .word-table th, .word-table td { border: 1px solid #000000 !important; padding: 6px 12px !important; font-family: Arial, sans-serif !important; font-size: 13px !important; color: #000000 !important; }
+        .word-table th { background-color: #f2f2f2 !important; font-weight: bold !important; text-align: left; }
         
         #elite-table-body td:last-child { font-weight: bold !important; }
     </style>
 </head>
 <body class="bg-slate-100 p-4 md:p-8">
 
-    <div id="interface-ui" class="max-w-4xl mx-auto bg-white p-4 md:p-8 rounded-xl shadow-lg border border-slate-200 mb-10">
+    <!-- data-html2canvas-ignore dice alla libreria di ignorare completamente questo blocco durante la conversione -->
+    <div id="interface-ui" data-html2canvas-ignore="true" class="max-w-4xl mx-auto bg-white p-4 md:p-8 rounded-xl shadow-lg border border-slate-200 mb-10">
         <h1 class="text-xl font-bold mb-6 text-slate-800 border-b pb-2">Configurazione Paziente</h1>
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
             <input type="text" id="in-nome" placeholder="Cognome" class="border p-2 rounded w-full">
@@ -109,83 +109,94 @@
         </button>
     </div>
 
+    <!-- Tutta l'area dei PDF da esportare -->
     <div id="report-block-completo" class="w-full flex flex-col gap-10 items-center">
         
-        <div id="action-bar" class="hidden w-full max-w-[210mm] flex justify-center gap-4 mb-6">
+        <div id="action-bar" data-html2canvas-ignore="true" class="hidden w-full max-w-[210mm] flex justify-center gap-4 mb-6">
             <button id="btn-esporta" onclick="scaricaPDFClientSide()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-8 rounded-lg transition-colors flex items-center gap-2">
                 <span id="btn-text">📥 Scarica PDF Pronto</span>
             </button>
         </div>
 
-        <div id="report-container" class="w-full max-w-[210mm] hidden preview-scroll">
-            <div id="pdf-content" class="pdf-page-render border border-slate-300 shadow-sm">
-                <img src="logo_de_salvo_transparent.png" class="watermark-bg">
-                <div class="flex justify-between items-center h-60 w-full mb-4 relative z-10">
-                    <div class="w-48 h-full flex items-center"><img id="sil-l" class="h-72 w-auto object-contain"></div>
-                    <div class="flex-1 flex flex-col items-center justify-center">
-                        <img src="logo_de_salvo_transparent.png" class="h-20 object-contain mb-2">
-                        <div class="text-center font-bold text-lg text-slate-800">
-                            <span id="out-nome-completo"></span><br>
-                            <span class="text-sm font-bold text-slate-600" id="out-data"></span>
+        <!-- Contenitore unico per html2pdf che include Pagina 1 e Pagina 2 unite -->
+        <div id="pdf-rendering-wrapper" class="w-full max-w-[210mm] hidden flex flex-col gap-10">
+            
+            <!-- PAGINA 1 -->
+            <div id="report-container" class="preview-scroll">
+                <div id="pdf-content" class="pdf-page-render border border-slate-300 shadow-sm">
+                    <img src="logo_de_salvo_transparent.png" class="watermark-bg">
+                    <div class="flex justify-between items-center h-60 w-full mb-4 relative z-10" style="display: flex; justify-content: space-between; align-items: center; height: 160px; margin-bottom: 16px;">
+                        <div style="width: 192px; height: 100%; display: flex; align-items: center;"><img id="sil-l" style="height: 288px; width: auto; object-fit: contain;"></div>
+                        <div style="flex: 1; display: flex; flex-col; flex-direction: column; align-items: center; justify-content: center; text-align: center;">
+                            <img src="logo_de_salvo_transparent.png" style="height: 80px; object-fit: contain; margin-bottom: 8px;">
+                            <div style="font-weight: bold; font-size: 18px; color: #1e293b;">
+                                <span id="out-nome-completo"></span><br>
+                                <span style="font-size: 14px; font-weight: bold; color: #475569;" id="out-data"></span>
+                            </div>
                         </div>
+                        <div style="width: 192px; height: 100%; display: flex; align-items: center; justify-content: flex-end;"><img id="sil-r" style="height: 288px; width: auto; object-fit: contain;"></div>
                     </div>
-                    <div class="w-48 h-full flex items-center justify-end"><img id="sil-r" class="h-72 w-auto object-contain"></div>
-                </div>
-                <h2 class="text-center bg-blue-600 text-white font-black text-2xl py-3 mt-[29mm] mb-6 uppercase tracking-widest relative z-10">Fabbisogni Energetici</h2>
-                <table class="word-table">
-                    <thead><tr><th>Parametro</th><th>Valore</th></tr></thead>
-                    <tbody>
-                        <tr><td>BMR (Metabolismo Basale)</td><td id="out-bmr" class="text-right">-</td></tr>
-                        <tr><td>RMR (Metabolismo a Riposo)</td><td id="out-rmr" class="text-right">-</td></tr>
-                        <tr><td>TDEE (Giornaliero)</td><td id="out-tdee" class="text-right">-</td></tr>
-                        <tr><td>TDEE Settimanale</td><td id="out-tdee-sett" class="text-right">-</td></tr>
-                        <tr><td>G/CC (Densità)</td><td id="out-gcc" class="text-right">-</td></tr>
-                        <tr><td>Massa Grassa (FM)</td><td id="out-fm" class="text-right">-</td></tr>
-                        <tr><td>Massa Magra (FFM)</td><td id="out-ffm" class="text-right">-</td></tr>
-                        <tr><td>Peso Ideale (Range)</td><td id="out-ibw" class="text-right">-</td></tr>
-                        <tr><td>Kg Grasso Corporeo</td><td id="out-kg-grasso" class="text-right">-</td></tr>
-                        <tr><td>Kg Massa Magra</td><td id="out-kg-magro" class="text-right">-</td></tr>
-                        <tr><td id="label-totale-pliche">Plicometria totale</td><td id="out-totale-pliche" class="text-right">-</td></tr>
-                        <tr><td>Peso Corporeo Attuale</td><td id="out-peso-attuale" class="text-right">-</td></tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <div id="elite-container" class="w-full max-w-[210mm] hidden preview-scroll">
-            <div id="elite-content" class="pdf-page-render border border-slate-300 shadow-sm">
-                <div class="flex justify-between items-center h-60 w-full mb-4 relative z-10">
-                    <div class="w-48 h-full flex items-center"><img id="elite-sil-l" class="h-84 w-auto object-contain -ml-6"></div>
-                    <div class="flex-1 flex flex-col items-center justify-center">
-                        <img src="logo_de_salvo_transparent.png" class="h-20 object-contain mb-2">
-                        <div class="text-center">
-                            <h1 class="bg-yellow-400 text-black font-bold px-4 py-1 text-xl border-b-4 border-black inline-block uppercase mb-1">Composizione Corporea</h1>
-                            <p class="font-bold text-lg text-slate-800 mt-[10mm]" id="elite-atleta"></p>
-                            <p class="text-sm font-bold text-slate-600" id="elite-data-2"></p>
-                        </div>
-                    </div>
-                    <div class="w-48 h-full flex items-center justify-end"><img id="elite-sil-r" class="h-84 w-auto object-contain -mr-6"></div>
-                </div>
-                <div class="relative w-full mt-[20mm]">
-                    <img src="logo_de_salvo_transparent.png" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full opacity-[0.06] pointer-events-none z-0">
+                    
+                    <h2 class="pdf-header-title">Fabbisogni Energetici</h2>
+                    
                     <table class="word-table">
-                        <tbody id="elite-table-body"></tbody>
+                        <thead><tr><th>Parametro</th><th>Valore</th></tr></thead>
+                        <tbody>
+                            <tr><td>BMR (Metabolismo Basale)</td><td id="out-bmr" style="text-align: right;">-</td></tr>
+                            <tr><td>RMR (Metabolismo a Riposo)</td><td id="out-rmr" style="text-align: right;">-</td></tr>
+                            <tr><td>TDEE (Giornaliero)</td><td id="out-tdee" style="text-align: right;">-</td></tr>
+                            <tr><td>TDEE Settimanale</td><td id="out-tdee-sett" style="text-align: right;">-</td></tr>
+                            <tr><td>G/CC (Densità)</td><td id="out-gcc" style="text-align: right;">-</td></tr>
+                            <tr><td>Massa Grassa (FM)</td><td id="out-fm" style="text-align: right;">-</td></tr>
+                            <tr><td>Massa Magra (FFM)</td><td id="out-ffm" style="text-align: right;">-</td></tr>
+                            <tr><td>Peso Ideale (Range)</td><td id="out-ibw" style="text-align: right;">-</td></tr>
+                            <tr><td>Kg Grasso Corporeo</td><td id="out-kg-grasso" style="text-align: right;">-</td></tr>
+                            <tr><td>Kg Massa Magra</td><td id="out-kg-magro" style="text-align: right;">-</td></tr>
+                            <tr><td id="label-totale-pliche">Plicometria totale</td><td id="out-totale-pliche" style="text-align: right;">-</td></tr>
+                            <tr><td>Peso Corporeo Attuale</td><td id="out-peso-attuale" style="text-align: right;">-</td></tr>
+                        </tbody>
                     </table>
                 </div>
-                <div class="mt-4 text-sm font-bold text-center">
-                    <p>Plicometro: GIMA DIGITALE (modello 37320)</p>
-                    <p id="elite-metodo"></p>
-                    <p>Somma pliche (mm)= <span id="elite-somma-totale">-</span></p>
+            </div>
+
+            <!-- INTERRUZIONE DI PAGINA COERENTE -->
+            <div class="html2pdf__page-break" data-html2canvas-ignore="true" style="height: 1px;"></div>
+
+            <!-- PAGINA 2 (Stile Elite) -->
+            <div id="elite-container" class="preview-scroll">
+                <div id="elite-content" class="pdf-page-render border border-slate-300 shadow-sm">
+                    <div class="flex justify-between items-center h-60 w-full mb-4 relative z-10" style="display: flex; justify-content: space-between; align-items: center; height: 160px; margin-bottom: 16px;">
+                        <div style="width: 192px; height: 100%; display: flex; align-items: center;"><img id="elite-sil-l" style="height: 310px; width: auto; object-fit: contain; margin-left: -24px;"></div>
+                        <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center;">
+                            <img src="logo_de_salvo_transparent.png" style="height: 80px; object-fit: contain; margin-bottom: 8px;">
+                            <div style="text-align: center;">
+                                <h1 class="pdf-elite-title">Composizione Corporea</h1>
+                                <p style="font-weight: bold; font-size: 18px; color: #1e293b; margin-top: 35px;" id="elite-atleta"></p>
+                                <p style="font-size: 14px; font-weight: bold; color: #475569;" id="elite-data-2"></p>
+                            </div>
+                        </div>
+                        <div style="width: 192px; height: 100%; display: flex; align-items: center; justify-content: flex-end;"><img id="elite-sil-r" style="height: 310px; width: auto; object-fit: contain; margin-right: -24px;"></div>
+                    </div>
+                    <div style="position: relative; width: 100%; margin-top: 60px;">
+                        <img src="logo_de_salvo_transparent.png" class="watermark-bg" style="top: 50%;">
+                        <table class="word-table">
+                            <tbody id="elite-table-body"></tbody>
+                        </table>
+                    </div>
+                    <div style="margin-top: 16px; font-size: 14px; font-weight: bold; text-align: center; color: #000000;">
+                        <p>Plicometro: GIMA DIGITALE (modello 37320)</p>
+                        <p id="elite-metodo"></p>
+                        <p>Somma pliche (mm)= <span id="elite-somma-totale">-</span></p>
+                    </div>
                 </div>
             </div>
-        </div>
 
+        </div>
     </div>
 
     <script>
         function aggiornaInterfaccia() {
             const sesso = document.getElementById('in-sesso').value;
-            // Nomi allineati perfettamente alle minuscole rilevate nello screenshot di GitHub
             const imgPath = sesso === 'M' ? 'Siluette_Uomo.jpeg' : 'Siluette_Donna.jpeg';
             document.getElementById('sil-l').src = encodeURI(imgPath);
             document.getElementById('sil-r').src = encodeURI(imgPath);
@@ -320,7 +331,6 @@
             document.getElementById('label-totale-pliche').innerText = (sesso === 'M') ? "Plicometria totale (7 pliche):" : "Plicometria totale (3 pliche):";
             document.getElementById('out-peso-attuale').innerText = !isNaN(peso) ? peso.toFixed(2).replace('.', ',') + " kg" : "-";
 
-            // Allineamento nomi file grafiche Elite ricontrollati da screenshot GitHub (.JPEG in maiuscolo)
             document.getElementById('elite-sil-l').src = sesso === 'M' ? 'COMPOSIZIONE CORPOREA UOMO.JPEG' : 'COMPOSIZIONE CORPOREA DONNA.JPEG';
             document.getElementById('elite-sil-r').src = sesso === 'M' ? 'COMPOSIZIONE CORPOREA UOMO.JPEG' : 'COMPOSIZIONE CORPOREA DONNA.JPEG';
             document.getElementById('elite-atleta').innerText = atletaStringa;
@@ -369,11 +379,10 @@
 
             tableBody.innerHTML = tableRowsHtml;
 
-            document.getElementById('report-container').classList.remove('hidden');
-            document.getElementById('elite-container').classList.remove('hidden');
+            document.getElementById('pdf-rendering-wrapper').classList.remove('hidden');
             document.getElementById('action-bar').classList.remove('hidden');
             
-            document.getElementById('report-container').scrollIntoView({ behavior: 'smooth' });
+            document.getElementById('pdf-rendering-wrapper').scrollIntoView({ behavior: 'smooth' });
         }
 
         function toBase64(imgElement) {
@@ -400,14 +409,14 @@
                     }
                 };
                 img.onerror = function() {
-                    console.warn("Impossibile caricare l'immagine:", imgElement.src);
                     resolve(''); 
                 };
             });
         }
 
         async function scaricaPDFClientSide() {
-            if (document.getElementById('report-container').classList.contains('hidden')) {
+            const targetElement = document.getElementById('pdf-rendering-wrapper');
+            if (targetElement.classList.contains('hidden')) {
                 alert("Genera prima il report inserendo i dati del paziente.");
                 return;
             }
@@ -422,54 +431,14 @@
                 const dataStr = document.getElementById('out-data').innerText || "";
                 const nomeFile = "Composizione corporea e Fabbisogni energetici " + dataStr;
 
-                const tempWrapper = document.createElement('div');
-                
-                const page1 = document.getElementById('pdf-content').cloneNode(true);
-                const page2 = document.getElementById('elite-content').cloneNode(true);
-                
-                page1.classList.remove('border', 'border-slate-300', 'shadow-sm');
-                page2.classList.remove('border', 'border-slate-300', 'shadow-sm');
-
-                const immaginiPagina1 = page1.querySelectorAll('img');
-                for (let img of immaginiPagina1) {
+                // Trasformiamo le immagini correnti visibili a schermo in Base64 prima del click di html2pdf
+                const tutteLeImmagini = targetElement.querySelectorAll('img');
+                for (let img of tutteLeImmagini) {
                     img.src = await toBase64(img);
                 }
 
-                const immaginiPagina2 = page2.querySelectorAll('img');
-                for (let img of immaginiPagina2) {
-                    img.src = await toBase64(img);
-                }
-
-                // PURIFICAZIONE TOTALE DALLE CLASSI TAILWIND V4
-                // Rimuovendo le classi Tailwind dai nodi clonati che vanno al canvas,
-                // azzeriamo l'ereditarietà di oklch() che causava il crash.
-                const rimuoviClassiTailwind = (elemento) => {
-                    elemento.removeAttribute('class');
-                    const figli = elemento.querySelectorAll('*');
-                    figli.forEach(figlio => {
-                        // Manteniamo solo le classi strutturali che servono ai nostri fogli di stile isolati
-                        if (!figlio.classList.contains('pdf-page-render') && 
-                            !figlio.classList.contains('watermark-bg') && 
-                            !figlio.classList.contains('word-table')) {
-                            figlio.removeAttribute('class');
-                        }
-                    });
-                };
-
-                rimuoviClassiTailwind(page1);
-                rimuoviClassiTailwind(page2);
-                
-                // Forziamo esplicitamente la classe di stile nativo isolata
-                page1.className = "pdf-page-render";
-                page2.className = "pdf-page-render";
-
-                const pageBreak = document.createElement('div');
-                pageBreak.className = 'html2pdf__page-break';
-
-                tempWrapper.appendChild(page1);
-                tempWrapper.appendChild(pageBreak);
-                tempWrapper.appendChild(page2);
-
+                // Opzioni di configurazione blindate:
+                // Sfruttiamo 'ignoreElements' per dire a html2canvas di ignorare tutto ciò che appartiene all'UI di Tailwind v4
                 const opt = {
                     margin: 0,
                     filename: nomeFile + '.pdf',
@@ -479,13 +448,18 @@
                         useCORS: true, 
                         allowTaint: false, 
                         backgroundColor: '#ffffff',
-                        logging: false
+                        logging: false,
+                        ignoreElements: (element) => {
+                            // Se l'elemento corrente ha l'attributo speciale di ignoramento, lo saltiamo ed evitiamo oklch
+                            return element.getAttribute('data-html2canvas-ignore') === 'true';
+                        }
                     },
                     jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
-                    pagebreak: { mode: 'css' }
+                    pagebreak: { mode: ['css', 'legacy'] }
                 };
 
-                html2pdf().set(opt).from(tempWrapper).save().then(() => {
+                // Stampiamo direttamente l'elemento wrapper visivo saltando i cloni instabili
+                html2pdf().set(opt).from(targetElement).save().then(() => {
                     btn.disabled = false;
                     btn.classList.replace('bg-slate-400', 'bg-emerald-600');
                     btnText.innerText = "📥 Scarica PDF Pronto";
