@@ -5,41 +5,79 @@
     <title>Stampa Report</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: Arial, sans-serif; background-color: #ffffff; color: #000000; }
+        body { font-family: Arial, sans-serif; background: #ffffff; color: #000000; }
 
+        /*
+          A4 a 96dpi = 794 x 1123px
+          padding 20mm = 75px
+          area utile larghezza = 794 - 150 = 644px
+        */
         .page-a4 {
-            width: 210mm;
-            height: 297mm;
-            padding: 20mm;
+            width: 794px;
+            height: 1123px;
+            padding: 75px;
             box-sizing: border-box;
             position: relative;
             overflow: hidden;
-            background-color: #ffffff;
+            background: #ffffff;
         }
 
-        /* ── P1 HEADER ── */
-        .p1-header {
+        /* ══════════════════════════════
+           HEADER — uguale su entrambe le pagine
+           altezza fissa 240px, siluette 288px (escono un po')
+           ══════════════════════════════ */
+        .hdr {
             display: flex;
             justify-content: space-between;
             align-items: center;
             height: 240px;
-            width: 100%;
-            margin-bottom: 16px;
+            width: 644px;   /* area utile */
             position: relative;
             z-index: 10;
         }
-        .p1-sil-l { width: 192px; height: 100%; display: flex; align-items: center; }
-        .p1-sil-l img { height: 288px; width: auto; object-fit: contain; }
-        .p1-sil-r { width: 192px; height: 100%; display: flex; align-items: center; justify-content: flex-end; }
-        .p1-sil-r img { height: 288px; width: auto; object-fit: contain; }
-        .p1-center { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
-        .p1-center .logo { height: 80px; object-fit: contain; margin-bottom: 8px; }
-        .p1-atleta { font-weight: bold; font-size: 18px; color: #1e293b; }
-        .p1-data { font-size: 14px; font-weight: bold; color: #475569; }
+        .hdr-sil {
+            width: 160px;
+            height: 240px;
+            display: flex;
+            align-items: center;
+            flex-shrink: 0;
+        }
+        .hdr-sil img {
+            height: 288px;
+            width: auto;
+            object-fit: contain;
+        }
+        .hdr-sil.right { justify-content: flex-end; }
 
-        /* ── TITOLO BLU ── */
+        .hdr-center {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 0 12px;
+        }
+        .hdr-center .logo {
+            height: 80px;
+            width: auto;
+            object-fit: contain;
+            margin-bottom: 8px;
+        }
+
+        /* ══════════════════════════════
+           PAGINA 1 — testi header
+           ══════════════════════════════ */
+        .p1-atleta { font-weight: bold; font-size: 18px; color: #1e293b; }
+        .p1-data   { font-size: 14px; font-weight: bold; color: #475569; }
+
+        /* ══════════════════════════════
+           TITOLO BLU P1
+           ══════════════════════════════ */
         .title-p1 {
-            background-color: #2563eb;
+            display: block;
+            width: 644px;
+            background: #2563eb;
             color: #ffffff;
             text-align: center;
             font-weight: 900;
@@ -47,192 +85,157 @@
             padding: 12px 0;
             text-transform: uppercase;
             letter-spacing: 0.1em;
-            margin-top: 29mm;
-            margin-bottom: 24px;
-            position: relative;
-            z-index: 10;
-            width: 100%;
-            display: block;
-        }
-
-        /* ── TABELLA P1 ── */
-        .p1-table-wrapper {
-            position: relative;
-            width: 100%;
-            z-index: 10;
-        }
-        .watermark-p1 {
-            position: absolute;
-            top: calc(50% - 20mm);
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 75%;
-            opacity: 0.06;
-            pointer-events: none;
-            z-index: 5;
-        }
-        .word-table {
-            border-collapse: collapse;
-            width: 100%;
+            margin-top: 110px;   /* spazio sotto header per siluette che escono */
+            margin-bottom: 20px;
             position: relative;
             z-index: 10;
         }
-        .word-table th, .word-table td {
-            border: 1px solid #cbd5e1;
-            padding: 6px 12px;
-            font-size: 13px;
-            text-align: center;
-        }
-        .word-table th {
-            background-color: #f2f2f2;
-            font-weight: bold;
-        }
-        .word-table td:first-child {
-            text-align: left;
-        }
 
-        /* ── P2 HEADER — stesse dimensioni di P1 ── */
-        .p2-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            height: 240px;
-            width: 100%;
-            margin-bottom: 16px;
+        /* ══════════════════════════════
+           TABELLA CONDIVISA
+           ══════════════════════════════ */
+        .tbl-wrapper {
             position: relative;
+            width: 644px;
             z-index: 10;
         }
-        /* Stesse dimensioni delle siluette di P1 */
-        .p2-sil-l { width: 192px; height: 100%; display: flex; align-items: center; }
-        .p2-sil-l img { height: 288px; width: auto; object-fit: contain; }
-        .p2-sil-r { width: 192px; height: 100%; display: flex; align-items: center; justify-content: flex-end; }
-        .p2-sil-r img { height: 288px; width: auto; object-fit: contain; }
-        .p2-center {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            text-align: center;
-        }
-        .p2-center .logo { height: 80px; object-fit: contain; margin-bottom: 8px; }
-
-        /* ── TITOLO GIALLO — larghezza piena, testo centrato ── */
-        .title-p2-wrap {
-            width: 100%;
-            display: flex;
-            justify-content: center;
-            margin-bottom: 4px;
-        }
-        .title-p2 {
-            background-color: #facc15;
-            color: #000000;
-            font-weight: bold;
-            padding: 6px 24px;
-            font-size: 20px;
-            border-bottom: 4px solid #000000;
-            text-transform: uppercase;
-            text-align: center;
-            display: block;
-            width: 100%;
-        }
-        .p2-atleta { font-weight: bold; font-size: 18px; color: #1e293b; margin-top: 10mm; }
-        .p2-data { font-size: 14px; font-weight: bold; color: #475569; }
-
-        /* ── TABELLA P2 ── */
-        .p2-table-wrapper { position: relative; width: 100%; margin-top: 20mm; z-index: 10; }
-        .watermark-p2 {
+        .wm {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 100%;
+            width: 80%;
             opacity: 0.06;
             pointer-events: none;
-            z-index: 5;
+            z-index: 1;
         }
-        .word-table-p2 {
+        .tbl {
             border-collapse: collapse;
             width: 100%;
             position: relative;
             z-index: 10;
         }
-        .word-table-p2 td {
+        .tbl td {
             border: 1px solid #cbd5e1;
-            padding: 6px 12px;
+            padding: 7px 14px;
             font-size: 13px;
             text-align: center;
         }
-        .word-table-p2 td:first-child {
-            text-align: left;
-        }
-        .word-table-p2 td:last-child { font-weight: bold; }
+        .tbl td:first-child { text-align: left; }
+        .tbl td:last-child  { font-weight: bold; }
 
-        /* ── FOOTER P2 ── */
-        .p2-footer { margin-top: 16px; font-size: 14px; font-weight: bold; text-align: center; }
+        /* ══════════════════════════════
+           PAGINA 2 — titolo giallo
+           ══════════════════════════════ */
+        .title-p2-wrap {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            margin-top: 6px;
+        }
+        .title-p2 {
+            display: block;
+            width: 100%;
+            background: #facc15;
+            color: #000000;
+            font-weight: bold;
+            font-size: 20px;
+            padding: 8px 0;
+            text-transform: uppercase;
+            text-align: center;
+            border-bottom: 4px solid #000000;
+        }
+        .p2-atleta { font-weight: bold; font-size: 18px; color: #1e293b; margin-top: 10px; }
+        .p2-data   { font-size: 14px; font-weight: bold; color: #475569; }
+
+        /* tabella p2 inizia dopo l'header */
+        .p2-tbl-wrapper {
+            position: relative;
+            width: 644px;
+            margin-top: 110px;
+            z-index: 10;
+        }
+
+        /* ══════════════════════════════
+           FOOTER P2
+           ══════════════════════════════ */
+        .p2-footer {
+            margin-top: 16px;
+            font-size: 14px;
+            font-weight: bold;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
 
-    <!-- PAGINA 1 -->
-    <div class="page-a4">
-        <div class="p1-header">
-            <div class="p1-sil-l"><img id="pdf-sil-l"></div>
-            <div class="p1-center">
-                <img class="logo" id="pdf-logo-1">
-                <div class="p1-atleta"><span id="pdf-atleta-p1"></span></div>
-                <div class="p1-data"><span id="pdf-data-p1"></span></div>
-            </div>
-            <div class="p1-sil-r"><img id="pdf-sil-r"></div>
+<!-- ═══════════════ PAGINA 1 ═══════════════ -->
+<div class="page-a4">
+
+    <div class="hdr">
+        <div class="hdr-sil"><img id="pdf-sil-l"></div>
+        <div class="hdr-center">
+            <img class="logo" id="pdf-logo-1">
+            <div class="p1-atleta"><span id="pdf-atleta-p1"></span></div>
+            <div class="p1-data"><span id="pdf-data-p1"></span></div>
         </div>
-        <h2 class="title-p1">Fabbisogni Energetici</h2>
-        <div class="p1-table-wrapper">
-            <img id="pdf-watermark-1" class="watermark-p1">
-            <table class="word-table">
-                <tbody>
-                    <tr><td>BMR (Metabolismo Basale)</td><td id="pdf-bmr">-</td></tr>
-                    <tr><td>RMR (Metabolismo a Riposo)</td><td id="pdf-rmr">-</td></tr>
-                    <tr><td>TDEE (Giornaliero)</td><td id="pdf-tdee">-</td></tr>
-                    <tr><td>TDEE Settimanale</td><td id="pdf-tdee-sett">-</td></tr>
-                    <tr><td>G/CC (Densità)</td><td id="pdf-gcc">-</td></tr>
-                    <tr><td>Massa Grassa (FM)</td><td id="pdf-fm">-</td></tr>
-                    <tr><td>Massa Magra (FFM)</td><td id="pdf-ffm">-</td></tr>
-                    <tr><td>Peso Ideale (Range)</td><td id="pdf-ibw">-</td></tr>
-                    <tr><td>Kg Grasso Corporeo</td><td id="pdf-kg-grasso">-</td></tr>
-                    <tr><td>Kg Massa Magra</td><td id="pdf-kg-magro">-</td></tr>
-                    <tr><td id="pdf-label-pliche">Plicometria totale</td><td id="pdf-totale-pliche">-</td></tr>
-                    <tr><td>Peso Corporeo Attuale</td><td id="pdf-peso-attuale">-</td></tr>
-                </tbody>
-            </table>
-        </div>
+        <div class="hdr-sil right"><img id="pdf-sil-r"></div>
     </div>
 
-    <!-- PAGINA 2 -->
-    <div class="page-a4">
-        <div class="p2-header">
-            <div class="p2-sil-l"><img id="pdf-elite-sil-l"></div>
-            <div class="p2-center">
-                <img class="logo" id="pdf-logo-2">
-                <div class="title-p2-wrap">
-                    <h1 class="title-p2">Composizione Corporea</h1>
-                </div>
-                <p class="p2-atleta"><span id="pdf-atleta-p2"></span></p>
-                <p class="p2-data"><span id="pdf-data-p2"></span></p>
-            </div>
-            <div class="p2-sil-r"><img id="pdf-elite-sil-r"></div>
-        </div>
-        <div class="p2-table-wrapper">
-            <img id="pdf-watermark-2" class="watermark-p2">
-            <table class="word-table-p2">
-                <tbody id="pdf-antropometria-rows"></tbody>
-            </table>
-        </div>
-        <div class="p2-footer">
-            <p>Plicometro: GIMA DIGITALE (modello 37320)</p>
-            <p id="pdf-metodo"></p>
-            <p>Somma pliche (mm)= <span id="pdf-somma-totale">-</span></p>
-        </div>
+    <div class="title-p1">Fabbisogni Energetici</div>
+
+    <div class="tbl-wrapper">
+        <img class="wm" id="pdf-watermark-1">
+        <table class="tbl">
+            <tbody>
+                <tr><td>BMR (Metabolismo Basale)</td>      <td id="pdf-bmr">-</td></tr>
+                <tr><td>RMR (Metabolismo a Riposo)</td>    <td id="pdf-rmr">-</td></tr>
+                <tr><td>TDEE (Giornaliero)</td>            <td id="pdf-tdee">-</td></tr>
+                <tr><td>TDEE Settimanale</td>              <td id="pdf-tdee-sett">-</td></tr>
+                <tr><td>G/CC (Densità)</td>                <td id="pdf-gcc">-</td></tr>
+                <tr><td>Massa Grassa (FM)</td>             <td id="pdf-fm">-</td></tr>
+                <tr><td>Massa Magra (FFM)</td>             <td id="pdf-ffm">-</td></tr>
+                <tr><td>Peso Ideale (Range)</td>           <td id="pdf-ibw">-</td></tr>
+                <tr><td>Kg Grasso Corporeo</td>            <td id="pdf-kg-grasso">-</td></tr>
+                <tr><td>Kg Massa Magra</td>                <td id="pdf-kg-magro">-</td></tr>
+                <tr><td id="pdf-label-pliche">Plicometria totale</td><td id="pdf-totale-pliche">-</td></tr>
+                <tr><td>Peso Corporeo Attuale</td>         <td id="pdf-peso-attuale">-</td></tr>
+            </tbody>
+        </table>
     </div>
+
+</div>
+
+<!-- ═══════════════ PAGINA 2 ═══════════════ -->
+<div class="page-a4">
+
+    <div class="hdr">
+        <div class="hdr-sil"><img id="pdf-elite-sil-l"></div>
+        <div class="hdr-center">
+            <img class="logo" id="pdf-logo-2">
+            <div class="title-p2-wrap">
+                <div class="title-p2">Composizione Corporea</div>
+            </div>
+            <div class="p2-atleta"><span id="pdf-atleta-p2"></span></div>
+            <div class="p2-data"><span id="pdf-data-p2"></span></div>
+        </div>
+        <div class="hdr-sil right"><img id="pdf-elite-sil-r"></div>
+    </div>
+
+    <div class="p2-tbl-wrapper">
+        <img class="wm" id="pdf-watermark-2">
+        <table class="tbl">
+            <tbody id="pdf-antropometria-rows"></tbody>
+        </table>
+    </div>
+
+    <div class="p2-footer">
+        <p>Plicometro: GIMA DIGITALE (modello 37320)</p>
+        <p id="pdf-metodo"></p>
+        <p>Somma pliche (mm)= <span id="pdf-somma-totale">-</span></p>
+    </div>
+
+</div>
 
 </body>
 </html>
