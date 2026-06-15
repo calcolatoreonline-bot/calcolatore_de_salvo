@@ -8,7 +8,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
-        /* Anteprime di visualizzazione locale prima del download */
         @media screen {
             .pdf-page-preview {
                 width: 210mm;
@@ -30,7 +29,8 @@
         }
         .watermark-preview { position: absolute; top: calc(50% + 45mm); left: 50%; transform: translate(-50%, -50%); width: 75%; opacity: 0.06; pointer-events: none; z-index: 0; }
         .table-preview { border-collapse: collapse; width: 100%; z-index: 10; position: relative; }
-        .table-preview th, .table-preview td { border: 1px solid #cbd5e1; padding: 6px 12px; font-size: 13px; }
+        .table-preview td { border: 1px solid #cbd5e1; padding: 6px 12px; font-size: 13px; text-align: center; }
+        .table-preview td:first-child { text-align: left; }
     </style>
 </head>
 <body class="bg-slate-100 p-4 md:p-8">
@@ -38,8 +38,8 @@
     <div id="interface-ui" class="max-w-4xl mx-auto bg-white p-4 md:p-8 rounded-xl shadow-lg border border-slate-200 mb-10">
         <h1 class="text-xl font-bold mb-6 text-slate-800 border-b pb-2">Configurazione Paziente</h1>
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            <input type="text" id="in-nome" placeholder="Cognome" class="border p-2 rounded w-full">
-            <input type="text" id="in-cognome" placeholder="Nome" class="border p-2 rounded w-full">
+            <!-- UNICA cella nome + cognome -->
+            <input type="text" id="in-nominativo" placeholder="Cognome Nome" class="border p-2 rounded w-full sm:col-span-2">
             <select id="in-sesso" onchange="aggiornaInterfaccia()" class="border p-2 rounded w-full">
                 <option value="M">Maschio</option>
                 <option value="F">Femmina</option>
@@ -75,55 +75,58 @@
             </button>
         </div>
 
+        <!-- PREVIEW P1 -->
         <div id="preview-container-p1" class="w-full max-w-[210mm] hidden preview-scroll">
             <div class="pdf-page-preview">
-                <div class="flex justify-between items-center h-40 w-full mb-4 relative z-10">
-                    <div class="w-48 h-full flex items-center"><img id="sil-l" class="h-64 w-auto object-contain"></div>
+                <div class="flex justify-between items-center h-60 w-full mb-4 relative z-10">
+                    <div class="w-48 h-full flex items-center"><img id="sil-l" class="h-72 w-auto object-contain"></div>
                     <div class="flex-1 flex flex-col items-center justify-center text-center">
-                        <img src="logo_de_salvo_transparent.png" class="h-16 object-contain mb-2">
+                        <img src="logo_de_salvo_transparent.png" class="h-20 object-contain mb-2">
                         <div class="font-bold text-lg text-slate-800">
                             <span id="out-nome-completo"></span><br>
                             <span class="text-sm font-bold text-slate-500" id="out-data"></span>
                         </div>
                     </div>
-                    <div class="w-48 h-full flex items-center justify-end"><img id="sil-r" class="h-64 w-auto object-contain"></div>
+                    <div class="w-48 h-full flex items-center justify-end"><img id="sil-r" class="h-72 w-auto object-contain"></div>
                 </div>
-                <h2 class="text-center bg-blue-600 text-white font-black text-xl py-2 mt-12 mb-4 uppercase tracking-widest">Fabbisogni Energetici</h2>
+                <h2 class="text-center w-full block bg-blue-600 text-white font-black text-xl py-3 mt-10 mb-4 uppercase tracking-widest">Fabbisogni Energetici</h2>
                 <div class="relative">
                     <img src="logo_de_salvo_transparent.png" class="watermark-preview" style="opacity: 0.06;">
                     <table class="table-preview">
                         <tbody>
-                            <tr><td>BMR (Metabolismo Basale)</td><td id="out-bmr" class="text-right font-bold">-</td></tr>
-                            <tr><td>RMR (Metabolismo a Riposo)</td><td id="out-rmr" class="text-right font-bold">-</td></tr>
-                            <tr><td>TDEE (Giornaliero)</td><td id="out-tdee" class="text-right font-bold">-</td></tr>
-                            <tr><td>TDEE Settimanale</td><td id="out-tdee-sett" class="text-right font-bold">-</td></tr>
-                            <tr><td>G/CC (Densità)</td><td id="out-gcc" class="text-right font-bold">-</td></tr>
-                            <tr><td>Massa Grassa (FM)</td><td id="out-fm" class="text-right font-bold">-</td></tr>
-                            <tr><td>Massa Magra (FFM)</td><td id="out-ffm" class="text-right font-bold">-</td></tr>
-                            <tr><td>Peso Ideale (Range)</td><td id="out-ibw" class="text-right font-bold">-</td></tr>
-                            <tr><td>Kg Grasso Corporeo</td><td id="out-kg-grasso" class="text-right font-bold">-</td></tr>
-                            <tr><td>Kg Massa Magra</td><td id="out-kg-magro" class="text-right font-bold">-</td></tr>
-                            <tr><td id="label-totale-pliche">Plicometria totale</td><td id="out-totale-pliche" class="text-right font-bold">-</td></tr>
-                            <tr><td>Peso Corporeo Attuale</td><td id="out-peso-attuale" class="text-right font-bold">-</td></tr>
+                            <tr><td>BMR (Metabolismo Basale)</td><td id="out-bmr" class="font-bold">-</td></tr>
+                            <tr><td>RMR (Metabolismo a Riposo)</td><td id="out-rmr" class="font-bold">-</td></tr>
+                            <tr><td>TDEE (Giornaliero)</td><td id="out-tdee" class="font-bold">-</td></tr>
+                            <tr><td>TDEE Settimanale</td><td id="out-tdee-sett" class="font-bold">-</td></tr>
+                            <tr><td>G/CC (Densità)</td><td id="out-gcc" class="font-bold">-</td></tr>
+                            <tr><td>Massa Grassa (FM)</td><td id="out-fm" class="font-bold">-</td></tr>
+                            <tr><td>Massa Magra (FFM)</td><td id="out-ffm" class="font-bold">-</td></tr>
+                            <tr><td>Peso Ideale (Range)</td><td id="out-ibw" class="font-bold">-</td></tr>
+                            <tr><td>Kg Grasso Corporeo</td><td id="out-kg-grasso" class="font-bold">-</td></tr>
+                            <tr><td>Kg Massa Magra</td><td id="out-kg-magro" class="font-bold">-</td></tr>
+                            <tr><td id="label-totale-pliche">Plicometria totale</td><td id="out-totale-pliche" class="font-bold">-</td></tr>
+                            <tr><td>Peso Corporeo Attuale</td><td id="out-peso-attuale" class="font-bold">-</td></tr>
                         </tbody>
                     </table>
                 </div>
             </div>
         </div>
 
+        <!-- PREVIEW P2 -->
         <div id="preview-container-p2" class="w-full max-w-[210mm] hidden preview-scroll">
             <div class="pdf-page-preview">
-                <div class="flex justify-between items-center h-40 w-full mb-4 relative z-10">
-                    <div class="w-48 h-full flex items-center"><img id="elite-sil-l" class="h-64 w-auto object-contain -ml-4"></div>
+                <!-- Header P2: stesse dimensioni di P1 -->
+                <div class="flex justify-between items-center h-60 w-full mb-4 relative z-10">
+                    <div class="w-48 h-full flex items-center"><img id="elite-sil-l" class="h-72 w-auto object-contain"></div>
                     <div class="flex-1 flex flex-col items-center justify-center text-center">
-                        <img src="logo_de_salvo_transparent.png" class="h-16 object-contain mb-2">
-                        <div>
-                            <h1 class="bg-yellow-400 text-black font-bold px-4 py-1 text-lg border-b-4 border-black inline-block uppercase mb-1">Composizione Corporea</h1>
-                            <p class="font-bold text-md text-slate-800 mt-4" id="elite-atleta"></p>
-                            <p class="text-sm font-bold text-slate-500" id="elite-data-2"></p>
+                        <img src="logo_de_salvo_transparent.png" class="h-20 object-contain mb-2">
+                        <div class="w-full flex justify-center">
+                            <h1 class="bg-yellow-400 text-black font-bold px-4 py-2 text-lg border-b-4 border-black uppercase w-full text-center">Composizione Corporea</h1>
                         </div>
+                        <p class="font-bold text-md text-slate-800 mt-4" id="elite-atleta"></p>
+                        <p class="text-sm font-bold text-slate-500" id="elite-data-2"></p>
                     </div>
-                    <div class="w-48 h-full flex items-center justify-end"><img id="elite-sil-r" class="h-64 w-auto object-contain -mr-4"></div>
+                    <div class="w-48 h-full flex items-center justify-end"><img id="elite-sil-r" class="h-72 w-auto object-contain"></div>
                 </div>
                 <div class="relative w-full mt-6">
                     <img src="logo_de_salvo_transparent.png" class="watermark-preview" style="top:50%; opacity: 0.06;">
@@ -185,8 +188,9 @@
             const altezza = parseFloat(document.getElementById('in-altezza').value);
             const eta = parseFloat(document.getElementById('in-eta').value);
             const laf = parseFloat(document.getElementById('in-attivita').value);
-            const cognome = (document.getElementById('in-nome').value || "").toUpperCase(); 
-            const nome = (document.getElementById('in-cognome').value || "").toUpperCase();  
+
+            // Unica cella nominativo
+            const nominativo = (document.getElementById('in-nominativo').value || "").toUpperCase().trim();
             
             const plicheMap = {};
             let haPliche = false;
@@ -215,8 +219,7 @@
                 sommaPliche = (plicheMap['Tricipitale'] || 0) + (plicheMap['Soprailiaca'] || 0) + (plicheMap['Coscia'] || 0);
             }
 
-            let atletaStringa = `ATLETA: ${cognome} ${nome}`.trim();
-            if (atletaStringa === "ATLETA:") atletaStringa = "ATLETA: -";
+            let atletaStringa = nominativo ? `ATLETA: ${nominativo}` : "ATLETA: -";
             
             const oggi = new Date();
             const giorno = String(oggi.getDate()).padStart(2, '0');
@@ -227,7 +230,9 @@
             reportDataStore = {
                 sesso, atletaStringa, dataFormattata, haPliche, sommaPliche,
                 metrics: {
-                    bmr: "-", rmr: "-", tdee: "-", tdeeSett: "-", gcc: "-", fm: "-", ffm: "-", ibw: "-", kgGrasso: "-", kgMagro: "-", totalePliche: haPliche ? sommaPliche.toFixed(1).replace('.', ',') + " mm" : "-", pesoAttuale: !isNaN(peso) ? peso.toFixed(2).replace('.', ',') + " kg" : "-"
+                    bmr: "-", rmr: "-", tdee: "-", tdeeSett: "-", gcc: "-", fm: "-", ffm: "-", ibw: "-", kgGrasso: "-", kgMagro: "-",
+                    totalePliche: haPliche ? sommaPliche.toFixed(1).replace('.', ',') + " mm" : "-",
+                    pesoAttuale: !isNaN(peso) ? peso.toFixed(2).replace('.', ',') + " kg" : "-"
                 },
                 rowsHtml: ""
             };
