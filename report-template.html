@@ -28,9 +28,9 @@
             position: relative;
             z-index: 10;
         }
-        .p1-sil-l { width: 192px; height: 100%; display: flex; align-items: center; flex-shrink: 0; }
+        .p1-sil-l { width: 192px; height: 100%; display: flex; align-items: center; }
         .p1-sil-l img { height: 288px; width: auto; object-fit: contain; }
-        .p1-sil-r { width: 192px; height: 100%; display: flex; align-items: center; justify-content: flex-end; flex-shrink: 0; }
+        .p1-sil-r { width: 192px; height: 100%; display: flex; align-items: center; justify-content: flex-end; }
         .p1-sil-r img { height: 288px; width: auto; object-fit: contain; }
         .p1-center { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
         .p1-center .logo { height: 80px; object-fit: contain; margin-bottom: 8px; }
@@ -58,15 +58,13 @@
             position: relative;
             width: 100%;
             z-index: 10;
-            overflow: hidden;
         }
         .watermark-p1 {
             position: absolute;
-            top: 50%;
+            top: calc(50% - 20mm);
             left: 50%;
             transform: translate(-50%, -50%);
-            max-width: 80%;
-            max-height: 80%;
+            width: 75%;
             opacity: 0.06;
             pointer-events: none;
             z-index: 5;
@@ -79,19 +77,15 @@
         }
         .word-table th, .word-table td {
             border: 1px solid #cbd5e1;
-            padding: 0px 12px;
+            padding: 6px 12px;
             font-size: 13px;
-            height: 32px;
-            line-height: 32px;
-            vertical-align: middle;
-            text-align: center;
         }
-        .word-table td:first-child { text-align: center; }
         .word-table th {
             background-color: #f2f2f2;
             font-weight: bold;
-            text-align: center;
+            text-align: left;
         }
+        .text-right { text-align: right; }
 
         /* ── P2 HEADER ── */
         .p2-header {
@@ -104,10 +98,10 @@
             position: relative;
             z-index: 10;
         }
-        .p2-sil-l { width: 192px; height: 100%; display: flex; align-items: center; flex-shrink: 0; margin-left: -0.5mm; }
-        .p2-sil-l img { height: 288px; width: auto; object-fit: contain; }
-        .p2-sil-r { width: 192px; height: 100%; display: flex; align-items: center; justify-content: flex-end; flex-shrink: 0; margin-right: -0.5mm; }
-        .p2-sil-r img { height: 288px; width: auto; object-fit: contain; }
+        .p2-sil-l { width: 192px; height: 100%; display: flex; align-items: center; }
+        .p2-sil-l img { height: 336px; width: auto; object-fit: contain; margin-left: -24px; }
+        .p2-sil-r { width: 192px; height: 100%; display: flex; align-items: center; justify-content: flex-end; }
+        .p2-sil-r img { height: 336px; width: auto; object-fit: contain; margin-right: -24px; }
         .p2-center { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
         .p2-center .logo { height: 80px; object-fit: contain; margin-bottom: 8px; }
 
@@ -121,25 +115,19 @@
             border-bottom: 4px solid #000000;
             display: inline-block;
             text-transform: uppercase;
-            text-align: center;
-            
-            /* Spostamento controllato preciso e compatibile con html2canvas */
-            margin-top: 5mm;
-            position: relative;
-            left: 2mm;
+            margin-bottom: 4px;
         }
-        .p2-atleta { font-weight: bold; font-size: 18px; color: #1e293b; margin-top: 16px; }
+        .p2-atleta { font-weight: bold; font-size: 18px; color: #1e293b; margin-top: 10mm; }
         .p2-data { font-size: 14px; font-weight: bold; color: #475569; }
 
         /* ── TABELLA P2 ── */
-        .p2-table-wrapper { position: relative; width: 100%; margin-top: 20mm; z-index: 10; overflow: hidden; }
+        .p2-table-wrapper { position: relative; width: 100%; margin-top: 20mm; z-index: 10; }
         .watermark-p2 {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            max-width: 80%;
-            max-height: 80%;
+            width: 100%;
             opacity: 0.06;
             pointer-events: none;
             z-index: 5;
@@ -152,14 +140,9 @@
         }
         .word-table-p2 td {
             border: 1px solid #cbd5e1;
-            padding: 0px 12px;
+            padding: 6px 12px;
             font-size: 13px;
-            height: 32px;
-            line-height: 32px;
-            vertical-align: middle;
-            text-align: center;
         }
-        .word-table-p2 td:first-child { text-align: center; }
         .word-table-p2 td:last-child { font-weight: bold; }
 
         /* ── FOOTER P2 ── */
@@ -168,6 +151,7 @@
 </head>
 <body>
 
+    <!-- PAGINA 1 -->
     <div class="page-a4">
         <div class="p1-header">
             <div class="p1-sil-l"><img id="pdf-sil-l"></div>
@@ -183,33 +167,32 @@
             <img id="pdf-watermark-1" class="watermark-p1">
             <table class="word-table">
                 <tbody>
-                    <tr><td>BMR (Metabolismo Basale)</td><td id="pdf-bmr">-</td></tr>
-                    <tr><td>RMR (Metabolismo a Riposo)</td><td id="pdf-rmr">-</td></tr>
-                    <tr><td>TDEE (Giornaliero)</td><td id="pdf-tdee">-</td></tr>
-                    <tr><td>TDEE Settimanale</td><td id="pdf-tdee-sett">-</td></tr>
-                    <tr><td>G/CC (Densità)</td><td id="pdf-gcc">-</td></tr>
-                    <tr><td>Massa Grassa (FM)</td><td id="pdf-fm">-</td></tr>
-                    <tr><td>Massa Magra (FFM)</td><td id="pdf-ffm">-</td></tr>
-                    <tr><td>Peso Ideale (Range)</td><td id="pdf-ibw">-</td></tr>
-                    <tr><td>Kg Grasso Corporeo</td><td id="pdf-kg-grasso">-</td></tr>
-                    <tr><td>Kg Massa Magra</td><td id="pdf-kg-magro">-</td></tr>
-                    <tr><td id="pdf-label-pliche">Plicometria totale</td><td id="pdf-totale-pliche">-</td></tr>
-                    <tr><td>Peso Corporeo Attuale</td><td id="pdf-peso-attuale">-</td></tr>
+                    <tr><td>BMR (Metabolismo Basale)</td><td class="text-right" id="pdf-bmr">-</td></tr>
+                    <tr><td>RMR (Metabolismo a Riposo)</td><td class="text-right" id="pdf-rmr">-</td></tr>
+                    <tr><td>TDEE (Giornaliero)</td><td class="text-right" id="pdf-tdee">-</td></tr>
+                    <tr><td>TDEE Settimanale</td><td class="text-right" id="pdf-tdee-sett">-</td></tr>
+                    <tr><td>G/CC (Densità)</td><td class="text-right" id="pdf-gcc">-</td></tr>
+                    <tr><td>Massa Grassa (FM)</td><td class="text-right" id="pdf-fm">-</td></tr>
+                    <tr><td>Massa Magra (FFM)</td><td class="text-right" id="pdf-ffm">-</td></tr>
+                    <tr><td>Peso Ideale (Range)</td><td class="text-right" id="pdf-ibw">-</td></tr>
+                    <tr><td>Kg Grasso Corporeo</td><td class="text-right" id="pdf-kg-grasso">-</td></tr>
+                    <tr><td>Kg Massa Magra</td><td class="text-right" id="pdf-kg-magro">-</td></tr>
+                    <tr><td id="pdf-label-pliche">Plicometria totale</td><td class="text-right" id="pdf-totale-pliche">-</td></tr>
+                    <tr><td>Peso Corporeo Attuale</td><td class="text-right" id="pdf-peso-attuale">-</td></tr>
                 </tbody>
             </table>
         </div>
     </div>
 
+    <!-- PAGINA 2 -->
     <div class="page-a4">
         <div class="p2-header">
             <div class="p2-sil-l"><img id="pdf-elite-sil-l"></div>
             <div class="p2-center">
                 <img class="logo" id="pdf-logo-2">
-                <div style="display: flex; flex-direction: column; align-items: center; width: 100%;">
-                    <h1 class="title-p2">Composizione Corporea</h1>
-                    <p class="p2-atleta"><span id="pdf-atleta-p2"></span></p>
-                    <p class="p2-data"><span id="pdf-data-p2"></span></p>
-                </div>
+                <h1 class="title-p2">Composizione Corporea</h1>
+                <p class="p2-atleta"><span id="pdf-atleta-p2"></span></p>
+                <p class="p2-data"><span id="pdf-data-p2"></span></p>
             </div>
             <div class="p2-sil-r"><img id="pdf-elite-sil-r"></div>
         </div>
