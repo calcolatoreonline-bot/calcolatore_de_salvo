@@ -28,9 +28,9 @@
             position: relative;
             z-index: 10;
         }
-        .p1-sil-l { width: 192px; height: 100%; display: flex; align-items: center; flex-shrink: 0; }
+        .p1-sil-l { width: 192px; height: 100%; display: flex; align-items: center; }
         .p1-sil-l img { height: 288px; width: auto; object-fit: contain; }
-        .p1-sil-r { width: 192px; height: 100%; display: flex; align-items: center; justify-content: flex-end; flex-shrink: 0; }
+        .p1-sil-r { width: 192px; height: 100%; display: flex; align-items: center; justify-content: flex-end; }
         .p1-sil-r img { height: 288px; width: auto; object-fit: contain; }
         .p1-center { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
         .p1-center .logo { height: 80px; object-fit: contain; margin-bottom: 8px; }
@@ -58,15 +58,13 @@
             position: relative;
             width: 100%;
             z-index: 10;
-            overflow: hidden;
         }
         .watermark-p1 {
             position: absolute;
-            top: 50%;
+            top: calc(50% - 20mm);
             left: 50%;
             transform: translate(-50%, -50%);
-            max-width: 80%;
-            max-height: 80%;
+            width: 75%;
             opacity: 0.06;
             pointer-events: none;
             z-index: 5;
@@ -79,10 +77,11 @@
         }
         .word-table th, .word-table td {
             border: 1px solid #cbd5e1;
-            padding: 6px 12px;
+            padding: 8px 12px;
             font-size: 13px;
             vertical-align: middle;
             text-align: center;
+            line-height: 1.2;
         }
         .word-table td:first-child { text-align: left; }
         .word-table th {
@@ -103,10 +102,10 @@
             position: relative;
             z-index: 10;
         }
-        .p2-sil-l { width: 192px; height: 100%; display: flex; align-items: center; flex-shrink: 0; }
-        .p2-sil-l img { height: 288px; width: auto; object-fit: contain; }
-        .p2-sil-r { width: 192px; height: 100%; display: flex; align-items: center; justify-content: flex-end; flex-shrink: 0; }
-        .p2-sil-r img { height: 288px; width: auto; object-fit: contain; }
+        .p2-sil-l { width: 192px; height: 100%; display: flex; align-items: center; }
+        .p2-sil-l img { height: 288px; width: auto; object-fit: contain; position: relative; left: -0.5mm; }
+        .p2-sil-r { width: 192px; height: 100%; display: flex; align-items: center; justify-content: flex-end; }
+        .p2-sil-r img { height: 288px; width: auto; object-fit: contain; position: relative; right: -0.5mm; }
         .p2-center { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
         .p2-center .logo { height: 80px; object-fit: contain; margin-bottom: 8px; }
 
@@ -114,27 +113,29 @@
         .title-p2 {
             background-color: #facc15;
             color: #000000;
-            font-weight: bold;
-            padding: 4px 16px;
-            font-size: 20px;
-            border-bottom: 4px solid #000000;
-            display: inline-block;
-            text-transform: uppercase;
-            margin-bottom: 4px;
+            font-weight: 900;
+            padding: 10px 20px;
+            font-size: 24px;
+            border-bottom: 5px solid #000000;
+            display: block;
+            width: 270px;
             text-align: center;
+            text-transform: uppercase;
+            margin: 0 auto 4px auto;
+            line-height: 1.1;
+            letter-spacing: 0.05em;
         }
         .p2-atleta { font-weight: bold; font-size: 18px; color: #1e293b; margin-top: 10mm; }
         .p2-data { font-size: 14px; font-weight: bold; color: #475569; }
 
         /* ── TABELLA P2 ── */
-        .p2-table-wrapper { position: relative; width: 100%; margin-top: 20mm; z-index: 10; overflow: hidden; }
+        .p2-table-wrapper { position: relative; width: 100%; margin-top: 20mm; z-index: 10; }
         .watermark-p2 {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            max-width: 80%;
-            max-height: 80%;
+            width: 100%;
             opacity: 0.06;
             pointer-events: none;
             z-index: 5;
@@ -147,10 +148,11 @@
         }
         .word-table-p2 td {
             border: 1px solid #cbd5e1;
-            padding: 6px 12px;
+            padding: 8px 12px;
             font-size: 13px;
             vertical-align: middle;
             text-align: center;
+            line-height: 1.2;
         }
         .word-table-p2 td:first-child { text-align: left; }
         .word-table-p2 td:last-child { font-weight: bold; }
@@ -198,8 +200,8 @@
             <div class="p2-sil-l"><img id="pdf-elite-sil-l"></div>
             <div class="p2-center">
                 <img class="logo" id="pdf-logo-2">
-                <div style="display: flex; flex-direction: column; align-items: center; width: 100%;">
-                    <h1 class="title-p2">Composizione Corporea</h1>
+                <div style="display: flex; flex-direction: column; align-items: center;">
+                    <h1 class="title-p2">Composizione<br>Corporea</h1>
                     <p class="p2-atleta"><span id="pdf-atleta-p2"></span></p>
                     <p class="p2-data"><span id="pdf-data-p2"></span></p>
                 </div>
