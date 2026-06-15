@@ -185,7 +185,7 @@ table.rt td:last-child  { text-align:center; font-weight:700; }
 
 /* ── FOOTER P2 ── */
 .p2-footer {
-  margin-top:14px;
+  margin-top:127px;
   font-size:13px;
   font-weight:700;
   text-align:center;
@@ -282,7 +282,7 @@ table.rt td:last-child  { text-align:center; font-weight:700; }
         <div class="hdr-sil"><img id="r-esil-l"></div>
         <div class="hdr-mid">
           <img class="hdr-logo" id="r-logo2">
-          <div class="title-yellow">Composizione Corporea</div>
+          <div class="title-yellow">Composizione<br>Corporea</div>
           <div class="p2-nome" id="r-nome2"></div>
           <div class="p2-data" id="r-data2"></div>
         </div>
@@ -529,10 +529,10 @@ async function scaricaPDF() {
       pdf.addImage(img, 'JPEG', 0, 0, 210, 297);
     }
 
-    const nom = document.getElementById('in-nominativo').value.trim() || 'Report';
+    const nom = document.getElementById('in-nominativo').value.trim().toUpperCase() || 'PAZIENTE';
     const oggi = new Date();
     const data = [oggi.getDate(),oggi.getMonth()+1,oggi.getFullYear()].map(x=>String(x).padStart(2,'0')).join('-');
-    pdf.save(`Composizione corporea e Fabbisogni energetici ${data}.pdf`);
+    pdf.save(`${nom} COMPOSIZIONE ENERGETICA FABBISOGNI ENERGETICI ${data}.pdf`);
 
   } catch(e) {
     console.error(e);
