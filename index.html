@@ -30,7 +30,8 @@
         }
         .watermark-preview { position: absolute; top: calc(50% + 45mm); left: 50%; transform: translate(-50%, -50%); width: 75%; opacity: 0.06; pointer-events: none; z-index: 0; }
         .table-preview { border-collapse: collapse; width: 100%; z-index: 10; position: relative; }
-        .table-preview th, .table-preview td { border: 1px solid #cbd5e1; padding: 6px 12px; font-size: 13px; }
+        .table-preview th, .table-preview td { border: 1px solid #cbd5e1; padding: 6px 12px; font-size: 13px; vertical-align: middle; text-align: center; }
+        .table-preview td:first-child { text-align: left; }
     </style>
 </head>
 <body class="bg-slate-100 p-4 md:p-8">
@@ -114,19 +115,19 @@
         <div id="preview-container-p2" class="w-full max-w-[210mm] hidden preview-scroll">
             <div class="pdf-page-preview">
                 <div class="flex justify-between items-center h-40 w-full mb-4 relative z-10">
-                    <div class="w-48 h-full flex items-center"><img id="elite-sil-l" class="h-64 w-auto object-contain -ml-4"></div>
+                    <div class="w-48 h-full flex items-center"><img id="elite-sil-l" class="h-64 w-auto object-contain"></div>
                     <div class="flex-1 flex flex-col items-center justify-center text-center">
                         <img src="logo_de_salvo_transparent.png" class="h-16 object-contain mb-2">
-                        <div>
+                        <div class="flex flex-col items-center">
                             <h1 class="bg-yellow-400 text-black font-bold px-4 py-1 text-lg border-b-4 border-black inline-block uppercase mb-1">Composizione Corporea</h1>
                             <p class="font-bold text-md text-slate-800 mt-4" id="elite-atleta"></p>
                             <p class="text-sm font-bold text-slate-500" id="elite-data-2"></p>
                         </div>
                     </div>
-                    <div class="w-48 h-full flex items-center justify-end"><img id="elite-sil-r" class="h-64 w-auto object-contain -mr-4"></div>
+                    <div class="w-48 h-full flex items-center justify-end"><img id="elite-sil-r" class="h-64 w-auto object-contain"></div>
                 </div>
                 <div class="relative w-full mt-6">
-                    <img src="logo_de_salvo_transparent.png" class="watermark-preview" style="top:50%; opacity: 0.06;">
+                    <img src="logo_de_salvo_transparent.png" class="watermark-preview" style="top:50%; opacity: 0.06; z-index: 0;">
                     <table class="table-preview">
                         <tbody id="elite-table-body"></tbody>
                     </table>
