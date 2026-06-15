@@ -17,8 +17,8 @@
             background-color: #ffffff;
         }
 
-        /* ── P1 HEADER: h-60=240px, w-48=192px, silhouette h-72=288px ── */
-        .p1-header {
+        /* ── HEADER COMUNI ── */
+        .p-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
@@ -28,149 +28,51 @@
             position: relative;
             z-index: 10;
         }
-        .p1-sil-l { width: 192px; height: 100%; display: flex; align-items: center; }
-        .p1-sil-l img { height: 288px; width: auto; object-fit: contain; }
-        .p1-sil-r { width: 192px; height: 100%; display: flex; align-items: center; justify-content: flex-end; }
-        .p1-sil-r img { height: 288px; width: auto; object-fit: contain; }
-        .p1-center { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
-        .p1-center .logo { height: 80px; object-fit: contain; margin-bottom: 8px; }
-        .p1-atleta { font-weight: bold; font-size: 18px; color: #1e293b; }
-        .p1-data { font-size: 14px; font-weight: bold; color: #475569; }
+        .p-sil-l { width: 192px; height: 100%; display: flex; align-items: center; }
+        .p-sil-l img { height: 288px; width: auto; object-fit: contain; }
+        .p-sil-r { width: 192px; height: 100%; display: flex; align-items: center; justify-content: flex-end; }
+        .p-sil-r img { height: 288px; width: auto; object-fit: contain; }
+        .p-center { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
+        .p-center .logo { height: 80px; object-fit: contain; margin-bottom: 8px; }
+        .p-atleta { font-weight: bold; font-size: 18px; color: #1e293b; }
+        .p-data { font-size: 14px; font-weight: bold; color: #475569; }
 
-        /* ── TITOLO BLU ── */
+        /* ── TITOLI ── */
         .title-p1 {
-            background-color: #2563eb;
-            color: #ffffff;
-            text-align: center;
-            font-weight: 900;
-            font-size: 24px;
-            padding: 12px 0;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            margin-top: 29mm;
-            margin-bottom: 24px;
-            position: relative;
-            z-index: 10;
+            background-color: #2563eb; color: #ffffff; text-align: center; font-weight: 900; font-size: 24px; padding: 12px 0; text-transform: uppercase; letter-spacing: 0.1em; margin-top: 29mm; margin-bottom: 24px;
         }
-
-        /* ── TABELLA P1 ── */
-        .p1-table-wrapper {
-            position: relative;
-            width: 100%;
-            z-index: 10;
-        }
-        .watermark-p1 {
-            position: absolute;
-            top: calc(50% - 20mm);
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 75%;
-            opacity: 0.06;
-            pointer-events: none;
-            z-index: 5;
-        }
-        .word-table {
-            border-collapse: collapse;
-            width: 100%;
-            position: relative;
-            z-index: 10;
-        }
-        .word-table th, .word-table td {
-            border: 1px solid #cbd5e1;
-            padding: 6px 12px;
-            font-size: 13px;
-            vertical-align: middle;
-            text-align: center;
-        }
-        .word-table td:first-child { text-align: left; }
-        .word-table th {
-            background-color: #f2f2f2;
-            font-weight: bold;
-            text-align: left;
-        }
-        .text-right { text-align: right; }
-
-        /* ── P2 HEADER ── */
-        .p2-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            height: 240px;
-            width: 100%;
-            margin-bottom: 16px;
-            position: relative;
-            z-index: 10;
-        }
-        .p2-sil-l { width: 192px; height: 100%; display: flex; align-items: center; }
-        .p2-sil-l img { height: 288px; width: auto; object-fit: contain; }
-        .p2-sil-r { width: 192px; height: 100%; display: flex; align-items: center; justify-content: flex-end; }
-        .p2-sil-r img { height: 288px; width: auto; object-fit: contain; }
-        .p2-center { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; }
-        .p2-center .logo { height: 80px; object-fit: contain; margin-bottom: 8px; }
-
-        /* ── TITOLO GIALLO ── */
+        .container-p2-title { display: flex; flex-direction: column; align-items: center; margin-top: 20mm; margin-bottom: 24px; }
         .title-p2 {
-            background-color: #facc15;
-            color: #000000;
-            font-weight: bold;
-            padding: 4px 16px;
-            font-size: 20px;
-            border-bottom: 4px solid #000000;
-            display: inline-block;
-            text-transform: uppercase;
-            margin-bottom: 4px;
+            background-color: #facc15; color: #000000; font-weight: bold; padding: 4px 16px; font-size: 20px; border-bottom: 4px solid #000000; display: inline-block; text-transform: uppercase;
         }
-        .p2-atleta { font-weight: bold; font-size: 18px; color: #1e293b; margin-top: 10mm; }
-        .p2-data { font-size: 14px; font-weight: bold; color: #475569; }
 
-        /* ── TABELLA P2 ── */
-        .p2-table-wrapper { position: relative; width: 100%; margin-top: 20mm; z-index: 10; }
-        .watermark-p2 {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 100%;
-            opacity: 0.06;
-            pointer-events: none;
-            z-index: 5;
+        /* ── TABELLE E WATERMARK ── */
+        .table-wrapper { position: relative; width: 100%; z-index: 10; }
+        .watermark {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 80%; opacity: 0.06; pointer-events: none; z-index: 5;
         }
-        .word-table-p2 {
-            border-collapse: collapse;
-            width: 100%;
-            position: relative;
-            z-index: 10;
-        }
-        .word-table-p2 td {
-            border: 1px solid #cbd5e1;
-            padding: 6px 12px;
-            font-size: 13px;
-            vertical-align: middle;
-            text-align: center;
-        }
-        .word-table-p2 td:first-child { text-align: left; }
-        .word-table-p2 td:last-child { font-weight: bold; }
-
-        /* ── FOOTER P2 ── */
+        .word-table { border-collapse: collapse; width: 100%; position: relative; z-index: 10; }
+        .word-table th, .word-table td { border: 1px solid #cbd5e1; padding: 6px 12px; font-size: 13px; vertical-align: middle; text-align: center; }
+        .word-table td:first-child { text-align: left; }
+        .word-table td.text-right { text-align: right; }
         .p2-footer { margin-top: 16px; font-size: 14px; font-weight: bold; text-align: center; }
     </style>
 </head>
 <body>
 
-    <!-- PAGINA 1 -->
     <div class="page-a4">
-        <div class="p1-header">
-            <div class="p1-sil-l"><img id="pdf-sil-l"></div>
-            <div class="p1-center">
+        <div class="p-header">
+            <div class="p-sil-l"><img id="pdf-sil-l"></div>
+            <div class="p-center">
                 <img class="logo" id="pdf-logo-1">
-                <div class="p1-atleta"><span id="pdf-atleta-p1"></span></div>
-                <div class="p1-data"><span id="pdf-data-p1"></span></div>
+                <div class="p-atleta"><span id="pdf-atleta-p1"></span></div>
+                <div class="p-data"><span id="pdf-data-p1"></span></div>
             </div>
-            <div class="p1-sil-r"><img id="pdf-sil-r"></div>
+            <div class="p-sil-r"><img id="pdf-sil-r"></div>
         </div>
         <h2 class="title-p1">Fabbisogni Energetici</h2>
-        <div class="p1-table-wrapper">
-            <img id="pdf-watermark-1" class="watermark-p1">
+        <div class="table-wrapper">
+            <img id="pdf-watermark-1" class="watermark">
             <table class="word-table">
                 <tbody>
                     <tr><td>BMR (Metabolismo Basale)</td><td class="text-right" id="pdf-bmr">-</td></tr>
@@ -190,23 +92,22 @@
         </div>
     </div>
 
-    <!-- PAGINA 2 -->
     <div class="page-a4">
-        <div class="p2-header">
-            <div class="p2-sil-l"><img id="pdf-elite-sil-l"></div>
-            <div class="p2-center">
+        <div class="p-header">
+            <div class="p-sil-l"><img id="pdf-elite-sil-l"></div>
+            <div class="p-center">
                 <img class="logo" id="pdf-logo-2">
-                <div style="display: flex; flex-direction: column; align-items: center;">
-                    <h1 class="title-p2">Composizione Corporea</h1>
-                    <p class="p2-atleta"><span id="pdf-atleta-p2"></span></p>
-                    <p class="p2-data"><span id="pdf-data-p2"></span></p>
-                </div>
             </div>
-            <div class="p2-sil-r"><img id="pdf-elite-sil-r"></div>
+            <div class="p-sil-r"><img id="pdf-elite-sil-r"></div>
         </div>
-        <div class="p2-table-wrapper">
-            <img id="pdf-watermark-2" class="watermark-p2">
-            <table class="word-table-p2">
+        <div class="container-p2-title">
+            <h1 class="title-p2">Composizione Corporea</h1>
+            <p class="p-atleta"><span id="pdf-atleta-p2"></span></p>
+            <p class="p-data"><span id="pdf-data-p2"></span></p>
+        </div>
+        <div class="table-wrapper">
+            <img id="pdf-watermark-2" class="watermark">
+            <table class="word-table">
                 <tbody id="pdf-antropometria-rows"></tbody>
             </table>
         </div>
@@ -216,6 +117,5 @@
             <p>Somma pliche (mm)= <span id="pdf-somma-totale">-</span></p>
         </div>
     </div>
-
 </body>
 </html>
