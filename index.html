@@ -52,11 +52,11 @@ input:focus, select:focus { outline:2px solid #2563eb; border-color:#2563eb; }
   overflow:hidden;
 }
 
-/* ═══════════════════════════════════════════════
+/* ═══════════════════════════════════════
    PAGINE PDF  –  794 × 1123 px  (A4 @ 96dpi)
    padding: 75px (≈ 20mm)
    area utile: 644 × 973 px
-═══════════════════════════════════════════════ */
+═══════════════════════════════════════ */
 .pdf-page {
   width:794px;
   height:1123px;
@@ -200,7 +200,6 @@ table.rt td:last-child  { text-align:center; font-weight:700; }
 </head>
 <body>
 
-<!-- ══════════════ FORM ══════════════ -->
 <div id="ui">
   <h1>De Salvo Team – Configurazione Report</h1>
 
@@ -237,7 +236,6 @@ table.rt td:last-child  { text-align:center; font-weight:700; }
     <button id="btn-pdf" onclick="scaricaPDF()">📥 Scarica PDF</button>
   </div>
 
-  <!-- PAGINA 1 -->
   <div class="pg-wrap" id="pg1">
     <div class="pdf-page" id="pdf-p1">
 
@@ -276,7 +274,6 @@ table.rt td:last-child  { text-align:center; font-weight:700; }
     </div>
   </div>
 
-  <!-- PAGINA 2 -->
   <div class="pg-wrap" id="pg2">
     <div class="pdf-page" id="pdf-p2">
 
@@ -306,7 +303,7 @@ table.rt td:last-child  { text-align:center; font-weight:700; }
 
 <script>
 /* ══════════════════════════════════════
-   NOMI FILE (non toccare)
+   NOMI FILE
 ══════════════════════════════════════ */
 const FILES = {
   logo:   'logo_de_salvo_transparent.png',
@@ -327,14 +324,14 @@ function aggiornaForm() {
     <input type="number" id="c-torace"  placeholder="Torace (cm)">
     <input type="number" id="c-vita"    placeholder="Vita (cm)">
     <input type="number" id="c-fianchi" placeholder="Fianchi (cm)">
-    <input type="number" id="c-braccio" placeholder="Braccio (cm)">
+    <input type="text"   id="c-braccio" placeholder="Braccio (cm)">
     <input type="number" id="c-coscia"  placeholder="Coscia (cm)">
   ` : `
     <input type="number" id="c-collo"   placeholder="Collo (cm)">
     <input type="number" id="c-vita"    placeholder="Vita (cm)">
     <input type="number" id="c-fianchi" placeholder="Fianchi (cm)">
     <input type="number" id="c-gluteo"  placeholder="Gluteo (cm)">
-    <input type="number" id="c-braccio" placeholder="Braccio (cm)">
+    <input type="text"   id="c-braccio" placeholder="Braccio (cm)">
     <input type="number" id="c-coscia"  placeholder="Coscia (cm)">
   `;
 
@@ -346,13 +343,22 @@ function aggiornaForm() {
 }
 
 /* ══════════════════════════════════════
-   HELPER
+   HELPER FORMATTAZIONE IDENTICI
 ══════════════════════════════════════ */
 const n  = id => parseFloat(document.getElementById(id)?.value) || 0;
 const v  = id => { const el = document.getElementById(id); return el?.value?.trim() || ''; };
-const f2 = x  => x.toFixed(2).replace('.',',');
-const f1 = x  => x.toFixed(1).replace('.',',');
-const fi = x  => Math.round(x).toString();
+
+const formatVal = id => {
+  const el = document.getElementById(id);
+  if (!el || !el.value) return '-';
+  return el.value.toString().replace('.', ',');
+};
+
+const formatPlica = (pm, key) => {
+  const val = pm[key];
+  if (val === undefined || val === 0 || isNaN(val)) return '-';
+  return val.toString().replace('.', ',');
+};
 
 function set(id, val) {
   const el = document.getElementById(id);
@@ -373,7 +379,7 @@ function genera() {
   const eta     = n('in-eta');
   const laf     = parseFloat(document.getElementById('in-laf').value);
   const nom     = v('in-nominativo').toUpperCase();
-  const atleta  = nom ? 'ATLETA: ' + nom : 'ATLETA: -';
+  const atleta  = nom ? 'ATLETA: ' + nom : 'ATLETA:';
 
   const oggi = new Date();
   const data = [oggi.getDate(),oggi.getMonth()+1,oggi.getFullYear()]
@@ -390,56 +396,82 @@ function genera() {
   set('r-nome1', atleta); set('r-data1', data);
   set('r-nome2', atleta); set('r-data2', data);
 
-  /* ── Calcoli ── */
-  let bmrV='-', rmrV='-', tdeeV='-', tdeewV='-';
-  if (peso>0 && altezza>0 && eta>0) {
-    const bmr = sesso==='M'
-      ? 10*peso + 6.25*altezza - 5*eta + 5
-      : 10*peso + 6.25*altezza - 5*eta - 161;
-    const rmr = sesso==='M'
-      ? 66.473 + 13.7516*peso + 5.0033*altezza - 6.755*eta
-      : 655.0955 + 9.5634*peso + 1.8496*altezza - 4.6756*eta;
-    bmrV  = fi(bmr)      + ' kcal';
-    rmrV  = fi(rmr)      + ' kcal';
-    tdeeV = fi(bmr*laf)  + ' kcal';
-    tdeewV= fi(bmr*laf*7)+ ' kcal/sett';
-  }
-
-  /* pliche */
+  /* Leggi pliche */
   const pk = sesso==='M'
     ? ['Pettorale','Ascellare','Addome','Soprailiaca','Tricipitale','Sottoscapolare','Coscia']
     : ['Addome','Soprailiaca','Tricipitale','Sottoscapolare','Coscia'];
+  
   const pm = {};
-  let somma = 0, haPliche = false;
+  let haPliche = false;
   pk.forEach(p => {
     const val = parseFloat(document.getElementById('p-'+p.toLowerCase())?.value) || 0;
     pm[p] = val;
-    somma += val;
-    if (val>0) haPliche = true;
+    if (val > 0) haPliche = true;
   });
 
-  let gccV='-',fmV='-',ffmV='-',ibwV='-',kggV='-',kgmV='-';
-  if (haPliche && peso>0 && eta>0) {
-    const D = sesso==='M'
-      ? 1.112 - 0.00043499*somma + 0.00000055*somma*somma - 0.00028826*eta
-      : 1.0994921 - 0.0009929*somma + 0.0000023*somma*somma - 0.0001392*eta;
-    const fm  = (495/D) - 450;
-    const kgg = peso*fm/100;
-    const kgm = peso - kgg;
-    const iMin = sesso==='M' ? kgm/0.90 : kgm/0.82;
-    const iMax = sesso==='M' ? kgm/0.88 : kgm/0.78;
-    gccV = f2(D)+' g/cc'; fmV = f2(fm)+' %'; ffmV = f2(100-fm)+' %';
-    ibwV = fi(iMin)+' - '+fi(iMax)+' kg';
-    kggV = f2(kgg)+' kg'; kgmV = f2(kgm)+' kg';
-  } else if (altezza>0) {
-    const h = altezza/100;
-    ibwV = fi(18.5*h*h)+' - '+fi(24.9*h*h)+' kg';
+  let sommaPliche = 0;
+  if (sesso === 'M') {
+    sommaPliche = (pm['Pettorale']||0)+(pm['Ascellare']||0)+(pm['Addome']||0)+(pm['Soprailiaca']||0)+(pm['Tricipitale']||0)+(pm['Sottoscapolare']||0)+(pm['Coscia']||0);
+  } else {
+    sommaPliche = (pm['Addome']||0)+(pm['Soprailiaca']||0)+(pm['Tricipitale']||0)+(pm['Sottoscapolare']||0)+(pm['Coscia']||0);
   }
 
-  const nPliche = sesso==='M' ? 7 : (sesso==='F' ? 3 : 0);
+  /* ── Calcoli e stringhe di output identici a Calcolatore4.0 ── */
+  let bmrV='-', rmrV='-', tdeeV='-', tdeewV='-';
+  if (peso > 0 && altezza > 0 && eta > 0) {
+    let bmr = 0, rmr = 0;
+    if (sesso === 'M') {
+      bmr = 10 * peso + 6.25 * altezza - 5 * eta + 5;
+      rmr = 66.473 + 13.7516 * peso + 5.0033 * altezza - 6.755 * eta;
+    } else {
+      bmr = 10 * peso + 6.25 * altezza - 5 * eta - 161;
+      rmr = 655.0955 + 9.5634 * peso + 1.8496 * altezza - 4.6756 * eta;
+    }
+    bmrV = Math.round(bmr) + " kcal";
+    rmrV = Math.round(rmr) + " kcal";
+    tdeeV = Math.round(bmr * laf) + " kcal";
+    tdeewV = Math.round(bmr * laf * 7) + " kcal/sett";
+  }
+
+  let gccV='-', fmV='-', ffmV='-', ibwV='-', kggV='-', kgmV='-';
+  if (haPliche && peso > 0 && eta > 0) {
+    let densita = 0;
+    if (sesso === 'M') {
+      densita = 1.112 - (0.00043499 * sommaPliche) + (0.00000055 * Math.pow(sommaPliche, 2)) - (0.00028826 * eta);
+    } else {
+      densita = 1.0994921 - (0.0009929 * sommaPliche) + (0.0000023 * Math.pow(sommaPliche, 2)) - (0.0001392 * eta);
+    }
+    const fm = (495 / densita) - 450;
+    const ffm = 100 - fm;
+    const kgg = (peso * fm) / 100;
+    const kgm = peso - kgg;
+
+    let iMin = 0, iMax = 0;
+    if (sesso === 'M') {
+      iMin = kgm / 0.90;
+      iMax = kgm / 0.88;
+    } else {
+      iMin = kgm / 0.82;
+      iMax = kgm / 0.78;
+    }
+
+    gccV = densita.toFixed(4).replace('.', ',') + " g/cc";
+    fmV = fm.toFixed(2).replace('.', ',') + " %";
+    ffmV = ffm.toFixed(2).replace('.', ',') + " %";
+    ibwV = Math.round(iMin) + " - " + Math.round(iMax) + " kg";
+    kggV = kgg.toFixed(2).replace('.', ',') + " kg";
+    kgmV = kgm.toFixed(2).replace('.', ',') + " kg";
+  } else if (altezza > 0) {
+    const h = altezza / 100;
+    const iMin = 18.5 * Math.pow(h, 2);
+    const iMax = 24.9 * Math.pow(h, 2);
+    ibwV = Math.round(iMin) + " - " + Math.round(iMax) + " kg";
+  }
+
+  const nPliche = sesso === 'M' ? 7 : 5;
   const lblPliche = `Plicometria totale (${nPliche} pliche):`;
-  const totPliche = haPliche ? f1(somma)+' mm' : '-';
-  const pesoV     = peso>0 ? f2(peso)+' kg' : '-';
+  const totPliche = haPliche ? sommaPliche.toFixed(1).replace('.', ',') + " mm" : "-";
+  const pesoV = peso > 0 ? peso.toFixed(2).replace('.', ',') + " kg" : "-";
 
   set('r-lbl-pliche', lblPliche);
   set('r-bmr',  bmrV);  set('r-rmr',  rmrV);
@@ -449,60 +481,60 @@ function genera() {
   set('r-kgg',  kggV);  set('r-kgm',  kgmV);
   set('r-pliche', totPliche); set('r-peso', pesoV);
 
-  /* ── Tabella antropometria ── */
-  const fv = id => { const el=document.getElementById(id); return el?.value ? el.value.replace('.',',')+' ' : '- '; };
-  const fp = k  => pm[k]>0 ? String(pm[k]).replace('.',',') : '-';
+  /* ── Tabella Composizione Corporea P2 ── */
+  let rows = `<tr><td>Peso</td><td>${formatVal('in-peso')}kg</td></tr>
+    <tr><td>Altezza</td><td>${formatVal('in-altezza')}cm</td></tr>`;
 
-  let rows = `<tr><td>Peso</td><td>${pesoV}</td></tr>
-    <tr><td>Altezza</td><td>${altezza>0?altezza+' cm':'-'}</td></tr>`;
-
-  if (sesso==='M') {
+  if (sesso === 'M') {
     rows += `
-      <tr><td>Circonferenza collo</td>     <td>${fv('c-collo')}cm</td></tr>
-      <tr><td>Circonferenza toracica</td>  <td>${fv('c-torace')}cm</td></tr>
-      <tr><td>Circonferenza vita</td>      <td>${fv('c-vita')}cm</td></tr>
-      <tr><td>Circonferenza fianchi</td>   <td>${fv('c-fianchi')}cm</td></tr>
-      <tr><td>Circonferenza braccio</td>   <td>${fv('c-braccio')}cm</td></tr>
-      <tr><td>Circonferenza coscia</td>    <td>${fv('c-coscia')}cm</td></tr>
-      <tr><td>Plica pettorale</td>         <td>${fp('Pettorale')} mm</td></tr>
-      <tr><td>Plica ascellare</td>         <td>${fp('Ascellare')} mm</td></tr>
-      <tr><td>Plica addome</td>            <td>${fp('Addome')} mm</td></tr>
-      <tr><td>Plica sovrailiaca</td>       <td>${fp('Soprailiaca')} mm</td></tr>
-      <tr><td>Plica tricipitale</td>       <td>${fp('Tricipitale')} mm</td></tr>
-      <tr><td>Plica sottoscapolare</td>    <td>${fp('Sottoscapolare')} mm</td></tr>
-      <tr><td>Plica coscia</td>            <td>${fp('Coscia')} mm</td></tr>`;
+      <tr><td>Circonferenza collo</td><td>${formatVal('c-collo')}</td></tr>
+      <tr><td>Circonferenza toracica</td><td>${formatVal('c-torace')}</td></tr>
+      <tr><td>Circonferenza vita</td><td>${formatVal('c-vita')}</td></tr>
+      <tr><td>Circonferenza fianchi</td><td>${formatVal('c-fianchi')}</td></tr>
+      <tr><td>Circonferenza braccio</td><td>${formatVal('c-braccio')}</td></tr>
+      <tr><td>Circonferenza coscia</td><td>${formatVal('c-coscia')}</td></tr>
+      <tr><td>Plica pettorale</td><td>${formatPlica(pm, 'Pettorale')}</td></tr>
+      <tr><td>Plica ascellare</td><td>${formatPlica(pm, 'Ascellare')}</td></tr>
+      <tr><td>Plica addome</td><td>${formatPlica(pm, 'Addome')}</td></tr>
+      <tr><td>Plica sovrailiaca</td><td>${formatPlica(pm, 'Soprailiaca')}</td></tr>
+      <tr><td>Plica tricipitale</td><td>${formatPlica(pm, 'Tricipitale')}</td></tr>
+      <tr><td>Plica sottoscapolare</td><td>${formatPlica(pm, 'Sottoscapolare')}</td></tr>
+      <tr><td>Plica coscia</td><td>${formatPlica(pm, 'Coscia')}</td></tr>
+    `;
   } else {
     rows += `
-      <tr><td>Circonferenza collo</td>     <td>${fv('c-collo')}cm</td></tr>
-      <tr><td>Circonferenza vita</td>      <td>${fv('c-vita')}cm</td></tr>
-      <tr><td>Circonferenza fianchi</td>   <td>${fv('c-fianchi')}cm</td></tr>
-      <tr><td>Circonferenza gluteo</td>    <td>${fv('c-gluteo')}cm</td></tr>
-      <tr><td>Circonferenza braccio</td>   <td>${fv('c-braccio')}cm</td></tr>
-      <tr><td>Circonferenza coscia</td>    <td>${fv('c-coscia')}cm</td></tr>
-      <tr><td>Plica addome</td>            <td>${fp('Addome')} mm</td></tr>
-      <tr><td>Plica sovrailiaca</td>       <td>${fp('Soprailiaca')} mm</td></tr>
-      <tr><td>Plica tricipitale</td>       <td>${fp('Tricipitale')} mm</td></tr>
-      <tr><td>Plica sottoscapolare</td>    <td>${fp('Sottoscapolare')} mm</td></tr>
-      <tr><td>Plica coscia</td>            <td>${fp('Coscia')} mm</td></tr>`;
+      <tr><td>Circonferenza collo</td><td>${formatVal('c-collo')}</td></tr>
+      <tr><td>Circonferenza vita</td><td>${formatVal('c-vita')}</td></tr>
+      <tr><td>Circonferenza fianchi</td><td>${formatVal('c-fianchi')}</td></tr>
+      <tr><td>Circonferenza gluteo</td><td>${formatVal('c-gluteo')}</td></tr>
+      <tr><td>Circonferenza braccio</td><td>${formatVal('c-braccio')}</td></tr>
+      <tr><td>Circonferenza coscia</td><td>${formatVal('c-coscia')}</td></tr>
+      <tr><td>Plica addome</td><td>${formatPlica(pm, 'Addome')}</td></tr>
+      <tr><td>Plica sovrailiaca</td><td>${formatPlica(pm, 'Soprailiaca')}</td></tr>
+      <tr><td>Plica tricipitale</td><td>${formatPlica(pm, 'Tricipitale')}</td></tr>
+      <tr><td>Plica sottoscapolare</td><td>${formatPlica(pm, 'Sottoscapolare')}</td></tr>
+      <tr><td>Plica coscia</td><td>${formatPlica(pm, 'Coscia')}</td></tr>
+    `;
   }
   document.getElementById('r-antro-rows').innerHTML = rows;
 
-  const metodo = sesso==='M' ? 'Metodo: Jackson & Pollock / 7 pliche' : 'Metodo: Jackson & Pollock / 3 pliche';
-  const sommaStr = haPliche ? f2(somma) : '-';
-  document.getElementById('r-footer').innerHTML =
-    `<p>Plicometro: GIMA DIGITALE (modello 37320)</p>
-     <p>${metodo}</p>
-     <p>Somma pliche (mm)= ${sommaStr}</p>`;
+  /* Footer P2 */
+  const metodo = sesso === 'M' ? 'Metodo: Jackson & Pollock / 7 pliche' : 'Metodo: Jackson & Pollock / 3 pliche';
+  const sommaStr = sommaPliche.toFixed(2).replace('.', ',') + "mm";
+  document.getElementById('r-footer').innerHTML = `
+    <p>Plicometro: GIMA DIGITALE (modello 37320)</p>
+    <p>${metodo}</p>
+    <p>Somma pliche (mm)= ${sommaStr}</p>
+  `;
 
-  /* mostra */
+  /* Visualizzazione anteprima */
   document.getElementById('preview-area').style.display = 'block';
   document.getElementById('btn-pdf').style.display = 'inline-block';
   document.getElementById('pdf-p1').scrollIntoView({behavior:'smooth'});
 }
 
 /* ══════════════════════════════════════
-   SCARICA PDF — cattura direttamente i
-   div già presenti nel DOM (niente iframe)
+   SCARICA PDF
 ══════════════════════════════════════ */
 async function scaricaPDF() {
   const btn = document.getElementById('btn-pdf');
