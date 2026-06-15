@@ -32,7 +32,7 @@ input, select {
   border:1px solid #cbd5e1; border-radius:6px;
   padding:9px 12px; font-size:14px; width:100%;
   background:#fff; color:#1e293b;
-  -webkit-appearance: none; /* Blocca deformazioni native su iOS/Android */
+  -webkit-appearance: none;
 }
 input:focus, select:focus { outline:2px solid #2563eb; border-color:#2563eb; }
 
@@ -45,7 +45,7 @@ input:focus, select:focus { outline:2px solid #2563eb; border-color:#2563eb; }
 
 #btn-pdf {
   display:none; 
-  margin:24px auto 24px; /* Spazio perfettamente simmetrico ed elegante sopra e sotto */
+  margin:24px auto 24px; /* Spazio simmetrico ed elegante sopra e sotto */
   background:#059669; color:#fff;
   border:none; border-radius:8px; padding:14px 40px; font-size:16px;
   font-weight:700; cursor:pointer; transition:background .2s;
@@ -54,7 +54,7 @@ input:focus, select:focus { outline:2px solid #2563eb; border-color:#2563eb; }
 #btn-pdf:hover { background:#047857; }
 #btn-pdf:disabled { background:#94a3b8; cursor:not-allowed; }
 
-/* ─── ANTEPRIMA ADATTIVA NO-CUT ─── */
+/* ─── ANTEPRIMA ADATTIVA ─── */
 #preview-area { display:none; max-width:860px; margin:0 auto 40px; }
 
 .pg-container-mobile {
@@ -187,13 +187,13 @@ input:focus, select:focus { outline:2px solid #2563eb; border-color:#2563eb; }
   z-index:10;
 }
 
-/* Blocco dimensioni fisse assolute per impedire il rimpicciolimento su mobile */
+/* Ripristinata la percentuale perfetta per PC e schermo telefono */
 .wmark {
   position:absolute;
   left:50%;
   transform:translate(-50%,-50%);
-  width:620px !important; 
-  height:auto !important;
+  width:78%;
+  height:auto;
   opacity:.055;
   pointer-events:none;
   z-index:1;
@@ -212,7 +212,7 @@ table.rt td {
   padding:6px 14px;
   font-size:13px;
   color:#1e293b;
-  background: transparent !important; /* Forza trasparenza per mostrare il watermark */
+  background: transparent !important;
 }
 table.rt td:first-child { text-align:left; }
 table.rt td:last-child  { text-align:center; font-weight:700; }
@@ -575,7 +575,7 @@ function genera() {
 }
 
 /* ══════════════════════════════════════
-   SCARICA PDF (Assoluto e Identico)
+   SCARICA PDF
 ══════════════════════════════════════ */
 async function scaricaPDF() {
   const btn = document.getElementById('btn-pdf');
@@ -583,11 +583,23 @@ async function scaricaPDF() {
   btn.textContent = '⏳ Generazione...';
 
   const wraps = document.querySelectorAll('.pg-wrap');
+  const watermarks = document.querySelectorAll('.wmark');
   const vecchieTrasformazioni = [];
+  
+  // Rileva se l'utente sta scaricando da uno smartphone/tablet
+  const isMobile = window.innerWidth <= 820;
+
   wraps.forEach(el => {
     vecchieTrasformazioni.push(el.style.transform);
-    el.style.transform = 'none'; /* Rimuove temporaneamente le alterazioni dello schermo mobile */
+    el.style.transform = 'none'; 
   });
+
+  // COMPENSAZIONE INTELLIGENTE: Solo su mobile forza il watermark a pixel fissi durante il rendering del canvas
+  if (isMobile) {
+    watermarks.forEach(wm => {
+      wm.style.setProperty('width', '502px', 'important');
+    });
+  }
 
   try {
     const { jsPDF } = window.jspdf;
@@ -603,7 +615,7 @@ async function scaricaPDF() {
         logging: false,
         width:  794,
         height: 1123,
-        windowWidth:  794,  /* Forza viewport fissa standardizzata */
+        windowWidth:  794,  
         windowHeight: 1123,
       });
       const img = canvas.toDataURL('image/jpeg', 0.97);
@@ -621,8 +633,15 @@ async function scaricaPDF() {
     alert('Errore nella generazione del PDF.');
   }
 
+  // Ripristina lo stato iniziale per la visualizzazione corretta ed elegante a schermo
+  if (isMobile) {
+    watermarks.forEach(wm => {
+      wm.style.removeProperty('width');
+    });
+  }
+
   wraps.forEach((el, index) => {
-    el.style.transform = vecchieTrasformazioni[index]; /* Ripristina l'anteprima corretta per il display */
+    el.style.transform = vecchieTrasformazioni[index];
   });
   btn.disabled = false;
   btn.textContent = '📥 Scarica PDF';
