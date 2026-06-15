@@ -30,7 +30,7 @@
         }
         .watermark-preview { position: absolute; top: calc(50% + 45mm); left: 50%; transform: translate(-50%, -50%); width: 75%; opacity: 0.06; pointer-events: none; z-index: 0; }
         .table-preview { border-collapse: collapse; width: 100%; z-index: 10; position: relative; }
-        .table-preview th, .table-preview td { border: 1px solid #cbd5e1; padding: 6px 12px; font-size: 13px; vertical-align: middle; text-align: center; }
+        .table-preview th, .table-preview td { border: 1px solid #cbd5e1; padding: 8px 12px; font-size: 13px; vertical-align: middle; text-align: center; line-height: 1.2; }
         .table-preview td:first-child { text-align: left; }
     </style>
 </head>
@@ -39,7 +39,8 @@
     <div id="interface-ui" class="max-w-4xl mx-auto bg-white p-4 md:p-8 rounded-xl shadow-lg border border-slate-200 mb-10">
         <h1 class="text-xl font-bold mb-6 text-slate-800 border-b pb-2">Configurazione Paziente</h1>
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            <input type="text" id="in-paziente" placeholder="Cognome e Nome" class="border p-2 rounded w-full col-span-2">
+            <input type="text" id="in-nome" placeholder="Cognome" class="border p-2 rounded w-full">
+            <input type="text" id="in-cognome" placeholder="Nome" class="border p-2 rounded w-full">
             <select id="in-sesso" onchange="aggiornaInterfaccia()" class="border p-2 rounded w-full">
                 <option value="M">Maschio</option>
                 <option value="F">Femmina</option>
@@ -114,16 +115,16 @@
         <div id="preview-container-p2" class="w-full max-w-[210mm] hidden preview-scroll">
             <div class="pdf-page-preview">
                 <div class="flex justify-between items-center h-40 w-full mb-4 relative z-10">
-                    <div class="w-48 h-full flex items-center"><img id="elite-sil-l" class="h-64 w-auto object-contain"></div>
+                    <div class="w-48 h-full flex items-center"><img id="elite-sil-l" class="h-64 w-auto object-contain" style="position: relative; left: -0.5mm;"></div>
                     <div class="flex-1 flex flex-col items-center justify-center text-center">
                         <img src="logo_de_salvo_transparent.png" class="h-16 object-contain mb-2">
                         <div class="flex flex-col items-center">
-                            <h1 class="bg-yellow-400 text-black font-bold px-4 py-1 text-lg border-b-4 border-black inline-block uppercase mb-1">Composizione Corporea</h1>
+                            <h1 class="bg-yellow-400 text-black font-black p-2 text-xl border-b-4 border-black block w-[270px] mx-auto text-center uppercase mb-1 leading-tight">Composizione<br>Corporea</h1>
                             <p class="font-bold text-md text-slate-800 mt-4" id="elite-atleta"></p>
                             <p class="text-sm font-bold text-slate-500" id="elite-data-2"></p>
                         </div>
                     </div>
-                    <div class="w-48 h-full flex items-center justify-end"><img id="elite-sil-r" class="h-64 w-auto object-contain"></div>
+                    <div class="w-48 h-full flex items-center justify-end"><img id="elite-sil-r" class="h-64 w-auto object-contain" style="position: relative; right: -0.5mm;"></div>
                 </div>
                 <div class="relative w-full mt-6">
                     <img src="logo_de_salvo_transparent.png" class="watermark-preview" style="top:50%; opacity: 0.06; z-index: 0;">
@@ -185,7 +186,8 @@
             const altezza = parseFloat(document.getElementById('in-altezza').value);
             const eta = parseFloat(document.getElementById('in-eta').value);
             const laf = parseFloat(document.getElementById('in-attivita').value);
-            const paziente = (document.getElementById('in-paziente').value || "").toUpperCase();
+            const cognome = (document.getElementById('in-nome').value || "").toUpperCase(); 
+            const nome = (document.getElementById('in-cognome').value || "").toUpperCase();  
             
             const plicheMap = {};
             let haPliche = false;
@@ -214,7 +216,7 @@
                 sommaPliche = (plicheMap['Tricipitale'] || 0) + (plicheMap['Soprailiaca'] || 0) + (plicheMap['Coscia'] || 0);
             }
 
-            let atletaStringa = `ATLETA: ${paziente}`.trim();
+            let atletaStringa = `ATLETA: ${cognome} ${nome}`.trim();
             if (atletaStringa === "ATLETA:") atletaStringa = "ATLETA: -";
             
             const oggi = new Date();
