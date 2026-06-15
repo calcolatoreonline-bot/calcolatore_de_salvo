@@ -2,17 +2,44 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <title>Dott. Valentino De Salvo - Report Analisi</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dott. Valentino De Salvo - Report Analisi Completo</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <style>
+        /* Anteprime di visualizzazione locale prima del download */
+        @media screen {
+            .pdf-page-preview {
+                width: 210mm;
+                height: 297mm;
+                padding: 20mm;
+                box-sizing: border-box;
+                background-color: #ffffff;
+                position: relative;
+                overflow: hidden;
+                box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+                border: 1px solid #e2e8f0;
+            }
+            .preview-scroll {
+                overflow-x: auto;
+                width: 100%;
+                padding-bottom: 1rem;
+                -webkit-overflow-scrolling: touch;
+            }
+        }
+        .watermark-preview { position: absolute; top: calc(50% + 45mm); left: 50%; transform: translate(-50%, -50%); width: 75%; opacity: 0.06; pointer-events: none; z-index: 0; }
+        .table-preview { border-collapse: collapse; width: 100%; z-index: 10; position: relative; }
+        .table-preview th, .table-preview td { border: 1px solid #cbd5e1; padding: 6px 12px; font-size: 13px; vertical-align: middle; text-align: center; }
+        .table-preview td:first-child { text-align: left; }
+    </style>
 </head>
 <body class="bg-slate-100 p-4 md:p-8">
 
-    <div class="max-w-4xl mx-auto bg-white p-4 md:p-8 rounded-xl shadow-lg border border-slate-200 mb-10">
+    <div id="interface-ui" class="max-w-4xl mx-auto bg-white p-4 md:p-8 rounded-xl shadow-lg border border-slate-200 mb-10">
         <h1 class="text-xl font-bold mb-6 text-slate-800 border-b pb-2">Configurazione Paziente</h1>
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            <input type="text" id="in-paziente" placeholder="Nome e Cognome" class="border p-2 rounded w-full col-span-2">
+            <input type="text" id="in-paziente" placeholder="Cognome e Nome" class="border p-2 rounded w-full col-span-2">
             <select id="in-sesso" onchange="aggiornaInterfaccia()" class="border p-2 rounded w-full">
                 <option value="M">Maschio</option>
                 <option value="F">Femmina</option>
@@ -28,21 +55,416 @@
                 <option value="1.9">Atleta (1.9)</option>
             </select>
         </div>
+        
         <h2 class="text-lg font-bold mb-4 text-slate-700">Misure Antropometriche</h2>
         <div id="cont-antropometriche" class="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-6"></div>
+
         <h2 class="text-lg font-bold mb-4 text-slate-700 border-t pt-4">Rilevazioni Plicometriche</h2>
         <div id="cont-pliche" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4"></div>
-        <button onclick="calcolaEGenera()" class="w-full mt-6 bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 transition-colors">Calcola e Genera Report</button>
+        
+        <button onclick="calcolaEGenera()" class="w-full mt-6 bg-blue-600 text-white py-3 rounded-lg font-bold hover:bg-blue-700 transition-colors">
+            Calcola e Genera Report
+        </button>
+    </div>
+
+    <div id="preview-block-completo" class="w-full flex flex-col gap-10 items-center">
+        
+        <div id="action-bar" class="hidden w-full max-w-[210mm] flex justify-center gap-4 mb-6">
+            <button id="btn-esporta" onclick="scaricaPDFTramiteFileSeparato()" class="bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 px-8 rounded-lg transition-colors flex items-center gap-2">
+                <span id="btn-text">📥 Scarica PDF Pronto</span>
+            </button>
+        </div>
+
+        <div id="preview-container-p1" class="w-full max-w-[210mm] hidden preview-scroll">
+            <div class="pdf-page-preview">
+                <div class="flex justify-between items-center h-40 w-full mb-4 relative z-10">
+                    <div class="w-48 h-full flex items-center"><img id="sil-l" class="h-64 w-auto object-contain"></div>
+                    <div class="flex-1 flex flex-col items-center justify-center text-center">
+                        <img src="logo_de_salvo_transparent.png" class="h-16 object-contain mb-2">
+                        <div class="font-bold text-lg text-slate-800">
+                            <span id="out-nome-completo"></span><br>
+                            <span class="text-sm font-bold text-slate-500" id="out-data"></span>
+                        </div>
+                    </div>
+                    <div class="w-48 h-full flex items-center justify-end"><img id="sil-r" class="h-64 w-auto object-contain"></div>
+                </div>
+                <h2 class="text-center bg-blue-600 text-white font-black text-xl py-2 mt-12 mb-4 uppercase tracking-widest">Fabbisogni Energetici</h2>
+                <div class="relative">
+                    <img src="logo_de_salvo_transparent.png" class="watermark-preview" style="opacity: 0.06;">
+                    <table class="table-preview">
+                        <tbody>
+                            <tr><td>BMR (Metabolismo Basale)</td><td id="out-bmr" class="text-right font-bold">-</td></tr>
+                            <tr><td>RMR (Metabolismo a Riposo)</td><td id="out-rmr" class="text-right font-bold">-</td></tr>
+                            <tr><td>TDEE (Giornaliero)</td><td id="out-tdee" class="text-right font-bold">-</td></tr>
+                            <tr><td>TDEE Settimanale</td><td id="out-tdee-sett" class="text-right font-bold">-</td></tr>
+                            <tr><td>G/CC (Densità)</td><td id="out-gcc" class="text-right font-bold">-</td></tr>
+                            <tr><td>Massa Grassa (FM)</td><td id="out-fm" class="text-right font-bold">-</td></tr>
+                            <tr><td>Massa Magra (FFM)</td><td id="out-ffm" class="text-right font-bold">-</td></tr>
+                            <tr><td>Peso Ideale (Range)</td><td id="out-ibw" class="text-right font-bold">-</td></tr>
+                            <tr><td>Kg Grasso Corporeo</td><td id="out-kg-grasso" class="text-right font-bold">-</td></tr>
+                            <tr><td>Kg Massa Magra</td><td id="out-kg-magro" class="text-right font-bold">-</td></tr>
+                            <tr><td id="label-totale-pliche">Plicometria totale</td><td id="out-totale-pliche" class="text-right font-bold">-</td></tr>
+                            <tr><td>Peso Corporeo Attuale</td><td id="out-peso-attuale" class="text-right font-bold">-</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div id="preview-container-p2" class="w-full max-w-[210mm] hidden preview-scroll">
+            <div class="pdf-page-preview">
+                <div class="flex justify-between items-center h-40 w-full mb-4 relative z-10">
+                    <div class="w-48 h-full flex items-center"><img id="elite-sil-l" class="h-64 w-auto object-contain"></div>
+                    <div class="flex-1 flex flex-col items-center justify-center text-center">
+                        <img src="logo_de_salvo_transparent.png" class="h-16 object-contain mb-2">
+                        <div class="flex flex-col items-center">
+                            <h1 class="bg-yellow-400 text-black font-bold px-4 py-1 text-lg border-b-4 border-black inline-block uppercase mb-1">Composizione Corporea</h1>
+                            <p class="font-bold text-md text-slate-800 mt-4" id="elite-atleta"></p>
+                            <p class="text-sm font-bold text-slate-500" id="elite-data-2"></p>
+                        </div>
+                    </div>
+                    <div class="w-48 h-full flex items-center justify-end"><img id="elite-sil-r" class="h-64 w-auto object-contain"></div>
+                </div>
+                <div class="relative w-full mt-6">
+                    <img src="logo_de_salvo_transparent.png" class="watermark-preview" style="top:50%; opacity: 0.06; z-index: 0;">
+                    <table class="table-preview">
+                        <tbody id="elite-table-body"></tbody>
+                    </table>
+                </div>
+                <div class="mt-4 text-xs font-bold text-center text-slate-700">
+                    <p>Plicometro: GIMA DIGITALE (modello 37320)</p>
+                    <p id="elite-metodo"></p>
+                    <p>Somma pliche (mm)= <span id="elite-somma-totale">-</span></p>
+                </div>
+            </div>
+        </div>
+
     </div>
 
     <script>
-        // Logica semplificata per l'unificazione del campo Nome
-        function calcolaEGenera() {
-            const nomePaziente = document.getElementById('in-paziente').value.toUpperCase();
-            // ... resto della logica di calcolo invariata ...
-            // Usa 'nomePaziente' nelle assegnazioni ai campi id="pdf-atleta-p1" e "pdf-atleta-p2"
+        let reportDataStore = {};
+
+        function aggiornaInterfaccia() {
+            const sesso = document.getElementById('in-sesso').value;
+            const imgPath = sesso === 'M' ? 'Siluette_Uomo.jpeg' : 'Siluette_Donna.jpeg';
+            document.getElementById('sil-l').src = encodeURI(imgPath);
+            document.getElementById('sil-r').src = encodeURI(imgPath);
+            
+            const contAntro = document.getElementById('cont-antropometriche');
+            if (sesso === 'M') {
+                contAntro.innerHTML = `
+                    <input type="number" id="c-collo" placeholder="Collo (cm)" class="border p-2 rounded w-full">
+                    <input type="number" id="c-torace" placeholder="Torace (cm)" class="border p-2 rounded w-full">
+                    <input type="number" id="c-vita" placeholder="Vita (cm)" class="border p-2 rounded w-full">
+                    <input type="number" id="c-fianchi" placeholder="Fianchi (cm)" class="border p-2 rounded w-full">
+                    <input type="text" id="c-braccio" placeholder="Braccio (cm)" class="border p-2 rounded w-full">
+                    <input type="number" id="c-coscia" placeholder="Coscia (cm)" class="border p-2 rounded w-full">
+                `;
+            } else {
+                contAntro.innerHTML = `
+                    <input type="number" id="c-collo" placeholder="Collo (cm)" class="border p-2 rounded w-full">
+                    <input type="number" id="c-vita" placeholder="Vita (cm)" class="border p-2 rounded w-full">
+                    <input type="number" id="c-fianchi" placeholder="Fianchi (cm)" class="border p-2 rounded w-full">
+                    <input type="number" id="c-gluteo" placeholder="Gluteo (cm)" class="border p-2 rounded w-full">
+                    <input type="text" id="c-braccio" placeholder="Braccio (cm)" class="border p-2 rounded w-full">
+                    <input type="number" id="c-coscia" placeholder="Coscia (cm)" class="border p-2 rounded w-full">
+                `;
+            }
+
+            const container = document.getElementById('cont-pliche');
+            const lista = (sesso === 'M') 
+                ? ['Pettorale', 'Ascellare', 'Addome', 'Soprailiaca', 'Tricipitale', 'Sottoscapolare', 'Coscia'] 
+                : ['Addome', 'Soprailiaca', 'Tricipitale', 'Sottoscapolare', 'Coscia'];
+                
+            container.innerHTML = lista.map(p => `<input type="number" id="p-${p.toLowerCase()}" placeholder="${p} (mm)" step="0.1" class="border p-2 rounded w-full bg-white">`).join('');
         }
-        // ... (Mantieni invariate le funzioni aggiornaInterfaccia, convertiInBase64 e scaricaPDFTramiteFileSeparato)
+
+        function calcolaEGenera() {
+            const sesso = document.getElementById('in-sesso').value;
+            const peso = parseFloat(document.getElementById('in-peso').value);
+            const altezza = parseFloat(document.getElementById('in-altezza').value);
+            const eta = parseFloat(document.getElementById('in-eta').value);
+            const laf = parseFloat(document.getElementById('in-attivita').value);
+            const paziente = (document.getElementById('in-paziente').value || "").toUpperCase();
+            
+            const plicheMap = {};
+            let haPliche = false;
+            document.querySelectorAll('#cont-pliche input').forEach(input => {
+                const val = parseFloat(input.value) || 0;
+                plicheMap[input.placeholder.split(' ')[0]] = val;
+                if (val > 0) haPliche = true;
+            });
+
+            const formatVal = (id) => {
+                const el = document.getElementById(id);
+                if (!el || !el.value) return '- ';
+                return el.value.toString().replace('.', ',') + ' ';
+            };
+
+            const formatPlica = (key) => {
+                const val = plicheMap[key];
+                if (val === undefined || val === 0) return '-';
+                return val.toString().replace('.', ',');
+            };
+
+            let sommaPliche = 0;
+            if (sesso === 'M') {
+                sommaPliche = (plicheMap['Pettorale'] || 0) + (plicheMap['Ascellare'] || 0) + (plicheMap['Addome'] || 0) + (plicheMap['Soprailiaca'] || 0) + (plicheMap['Tricipitale'] || 0) + (plicheMap['Sottoscapolare'] || 0) + (plicheMap['Coscia'] || 0);
+            } else {
+                sommaPliche = (plicheMap['Tricipitale'] || 0) + (plicheMap['Soprailiaca'] || 0) + (plicheMap['Coscia'] || 0);
+            }
+
+            let atletaStringa = `ATLETA: ${paziente}`.trim();
+            if (atletaStringa === "ATLETA:") atletaStringa = "ATLETA: -";
+            
+            const oggi = new Date();
+            const giorno = String(oggi.getDate()).padStart(2, '0');
+            const mese = String(oggi.getMonth() + 1).padStart(2, '0');
+            const anno = oggi.getFullYear();
+            const dataFormattata = `${giorno}-${mese}-${anno}`;
+
+            reportDataStore = {
+                sesso, atletaStringa, dataFormattata, haPliche, sommaPliche,
+                metrics: {
+                    bmr: "-", rmr: "-", tdee: "-", tdeeSett: "-", gcc: "-", fm: "-", ffm: "-", ibw: "-", kgGrasso: "-", kgMagro: "-", totalePliche: haPliche ? sommaPliche.toFixed(1).replace('.', ',') + " mm" : "-", pesoAttuale: !isNaN(peso) ? peso.toFixed(2).replace('.', ',') + " kg" : "-"
+                },
+                rowsHtml: ""
+            };
+
+            document.getElementById('out-nome-completo').innerText = atletaStringa;
+            document.getElementById('out-data').innerText = dataFormattata;
+            
+            if (!isNaN(peso) && !isNaN(altezza) && !isNaN(eta)) {
+                const bmr = (sesso === 'M') ? (10 * peso) + (6.25 * altezza) - (5 * eta) + 5 : (10 * peso) + (6.25 * altezza) - (5 * eta) - 161;
+                const rmr = (sesso === 'M') ? 66.473 + (13.7516 * peso) + (5.0033 * altezza) - (6.755 * eta) : 655.0955 + (9.5634 * peso) + (1.8496 * altezza) - (4.6756 * eta);
+                
+                reportDataStore.metrics.bmr = Math.round(bmr) + " kcal";
+                reportDataStore.metrics.rmr = Math.round(rmr) + " kcal";
+                reportDataStore.metrics.tdee = Math.round(bmr * laf) + " kcal";
+                reportDataStore.metrics.tdeeSett = Math.round(bmr * laf * 7) + " kcal/sett";
+            }
+
+            if (haPliche && !isNaN(peso) && !isNaN(eta)) {
+                let densita = (sesso === 'M') 
+                    ? 1.112 - (0.00043499 * sommaPliche) + (0.00000055 * Math.pow(sommaPliche, 2)) - (0.00028826 * eta)
+                    : 1.0994921 - (0.0009929 * sommaPliche) + (0.0000023 * Math.pow(sommaPliche, 2)) - (0.0001392 * eta);
+
+                const fm = (495 / densita) - 450;
+                const kgGrasso = (peso * fm) / 100;
+                const kgMagro = peso - kgGrasso;
+                
+                const ibwMin = (sesso === 'M') ? (kgMagro / 0.90) : (kgMagro / 0.82);
+                const ibwMax = (sesso === 'M') ? (kgMagro / 0.88) : (kgMagro / 0.78);
+
+                reportDataStore.metrics.gcc = densita.toFixed(4).replace('.', ',') + " g/cc";
+                reportDataStore.metrics.fm = fm.toFixed(2).replace('.', ',') + " %";
+                reportDataStore.metrics.ffm = (100 - fm).toFixed(2).replace('.', ',') + " %";
+                reportDataStore.metrics.ibw = Math.round(ibwMin) + " - " + Math.round(ibwMax) + " kg";
+                reportDataStore.metrics.kgGrasso = kgGrasso.toFixed(2).replace('.', ',') + " kg";
+                reportDataStore.metrics.kgMagro = kgMagro.toFixed(2).replace('.', ',') + " kg";
+            } else if (!isNaN(altezza) && altezza > 0) {
+                const hMetri = altezza / 100;
+                reportDataStore.metrics.ibw = Math.round(18.5 * hMetri * hMetri) + " - " + Math.round(24.9 * hMetri * hMetri) + " kg";
+            }
+
+            document.getElementById('out-bmr').innerText = reportDataStore.metrics.bmr;
+            document.getElementById('out-rmr').innerText = reportDataStore.metrics.rmr;
+            document.getElementById('out-tdee').innerText = reportDataStore.metrics.tdee;
+            document.getElementById('out-tdee-sett').innerText = reportDataStore.metrics.tdeeSett;
+            document.getElementById('out-gcc').innerText = reportDataStore.metrics.gcc;
+            document.getElementById('out-fm').innerText = reportDataStore.metrics.fm;
+            document.getElementById('out-ffm').innerText = reportDataStore.metrics.ffm;
+            document.getElementById('out-ibw').innerText = reportDataStore.metrics.ibw;
+            document.getElementById('out-kg-grasso').innerText = reportDataStore.metrics.kgGrasso;
+            document.getElementById('out-kg-magro').innerText = reportDataStore.metrics.kgMagro;
+            document.getElementById('out-totale-pliche').innerText = reportDataStore.metrics.totalePliche;
+            document.getElementById('out-peso-attuale').innerText = reportDataStore.metrics.pesoAttuale;
+            document.getElementById('label-totale-pliche').innerText = (sesso === 'M') ? "Plicometria totale (7 pliche):" : "Plicometria totale (3 pliche):";
+
+            const imgPathElite = sesso === 'M' ? 'COMPOSIZIONE CORPOREA UOMO.JPEG' : 'COMPOSIZIONE CORPOREA DONNA.JPEG';
+            document.getElementById('elite-sil-l').src = imgPathElite;
+            document.getElementById('elite-sil-r').src = imgPathElite;
+            document.getElementById('elite-atleta').innerText = atletaStringa;
+            document.getElementById('elite-data-2').innerText = dataFormattata;
+            document.getElementById('elite-somma-totale').innerText = haPliche ? sommaPliche.toFixed(2).replace('.', ',') + " mm" : "-";
+            document.getElementById('elite-metodo').innerText = sesso === 'M' ? 'Metodo: Jackson & Pollock / 7 pliche' : 'Metodo: Jackson & Pollock / 3 pliche';
+
+            if (sesso === 'M') {
+                reportDataStore.rowsHtml = `
+                    <tr><td>Peso</td><td>${formatVal('in-peso')}kg</td></tr>
+                    <tr><td>Altezza</td><td>${formatVal('in-altezza')}cm</td></tr>
+                    <tr><td>Circonferenza collo</td><td>${formatVal('c-collo')}cm</td></tr>
+                    <tr><td>Circonferenza toracica</td><td>${formatVal('c-torace')}cm</td></tr>
+                    <tr><td>Circonferenza vita</td><td>${formatVal('c-vita')}cm</td></tr>
+                    <tr><td>Circonferenza fianchi</td><td>${formatVal('c-fianchi')}cm</td></tr>
+                    <tr><td>Circonferenza braccio</td><td>${formatVal('c-braccio')}cm</td></tr>
+                    <tr><td>Circonferenza coscia</td><td>${formatVal('c-coscia')}cm</td></tr>
+                    <tr><td>Plica pettorale</td><td>${formatPlica('Pettorale')} mm</td></tr>
+                    <tr><td>Plica ascellare</td><td>${formatPlica('Ascellare')} mm</td></tr>
+                    <tr><td>Plica addome</td><td>${formatPlica('Addome')} mm</td></tr>
+                    <tr><td>Plica sovrailiaca</td><td>${formatPlica('Soprailiaca')} mm</td></tr>
+                    <tr><td>Plica tricipitale</td><td>${formatPlica('Tricipitale')} mm</td></tr>
+                    <tr><td>Plica sottoscapolare</td><td>${formatPlica('Sottoscapolare')} mm</td></tr>
+                    <tr><td>Plica coscia</td><td>${formatPlica('Coscia')} mm</td></tr>
+                `;
+            } else {
+                reportDataStore.rowsHtml = `
+                    <tr><td>Peso</td><td>${formatVal('in-peso')}kg</td></tr>
+                    <tr><td>Altezza</td><td>${formatVal('in-altezza')}cm</td></tr>
+                    <tr><td>Circonferenza collo</td><td>${formatVal('c-collo')}cm</td></tr>
+                    <tr><td>Circonferenza vita</td><td>${formatVal('c-vita')}cm</td></tr>
+                    <tr><td>Circonferenza fianchi</td><td>${formatVal('c-fianchi')}cm</td></tr>
+                    <tr><td>Circonferenza gluteo</td><td>${formatVal('c-gluteo')}cm</td></tr>
+                    <tr><td>Circonferenza braccio</td><td>${formatVal('c-braccio')}cm</td></tr>
+                    <tr><td>Circonferenza coscia</td><td>${formatVal('c-coscia')}cm</td></tr>
+                    <tr><td>Plica addome</td><td>${formatPlica('Addome')} mm</td></tr>
+                    <tr><td>Plica sovrailiaca</td><td>${formatPlica('Soprailiaca')} mm</td></tr>
+                    <tr><td>Plica tricipitale</td><td>${formatPlica('Tricipitale')} mm</td></tr>
+                    <tr><td>Plica sottoscapolare</td><td>${formatPlica('Sottoscapolare')} mm</td></tr>
+                    <tr><td>Plica coscia</td><td>${formatPlica('Coscia')} mm</td></tr>
+                `;
+            }
+
+            document.getElementById('elite-table-body').innerHTML = reportDataStore.rowsHtml;
+
+            document.getElementById('preview-container-p1').classList.remove('hidden');
+            document.getElementById('preview-container-p2').classList.remove('hidden');
+            document.getElementById('action-bar').classList.remove('hidden');
+            document.getElementById('preview-container-p1').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function convertiInBase64(url) {
+            return new Promise((resolve) => {
+                const img = new Image();
+                img.crossOrigin = 'Anonymous';
+                img.src = encodeURI(url);
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = img.naturalWidth;
+                    canvas.height = img.naturalHeight;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0);
+                    try { resolve(canvas.toDataURL('image/png')); } catch (e) { resolve(url); }
+                };
+                img.onerror = () => resolve(url);
+            });
+        }
+
+        async function scaricaPDFTramiteFileSeparato() {
+            const btn = document.getElementById('btn-esporta');
+            const btnText = document.getElementById('btn-text');
+            btn.disabled = true;
+            btn.classList.replace('bg-emerald-600', 'bg-slate-400');
+            btnText.innerText = "⏳ Preparazione Modello...";
+
+            let iframe = document.getElementById('pdf-render-iframe');
+            if (iframe) iframe.remove();
+            iframe = document.createElement('iframe');
+            iframe.id = 'pdf-render-iframe';
+            iframe.style.cssText = 'position:fixed;top:0;left:0;width:210mm;height:594mm;border:none;visibility:hidden;z-index:-1;';
+            document.body.appendChild(iframe);
+
+            try {
+                const silhouettePath = reportDataStore.sesso === 'M' ? 'Siluette_Uomo.jpeg' : 'Siluette_Donna.jpeg';
+                const silhouetteElitePath = reportDataStore.sesso === 'M' ? 'COMPOSIZIONE CORPOREA UOMO.JPEG' : 'COMPOSIZIONE CORPOREA DONNA.JPEG';
+
+                const b64Watermark = await convertiInBase64('logo_de_salvo_transparent.png');
+                const b64Silhouette = await convertiInBase64(silhouettePath);
+                const b64SilhouetteElite = await convertiInBase64(silhouetteElitePath);
+
+                const response = await fetch('report-template.html');
+                const templateHtml = await response.text();
+
+                const iDoc = iframe.contentDocument || iframe.contentWindow.document;
+                iDoc.open();
+                iDoc.write(templateHtml);
+                iDoc.close();
+
+                await new Promise(r => { iframe.onload = r; setTimeout(r, 800); });
+
+                const d = iDoc;
+
+                d.getElementById('pdf-watermark-1').src = b64Watermark;
+                d.getElementById('pdf-watermark-2').src = b64Watermark;
+                d.getElementById('pdf-logo-1').src = b64Watermark;
+                d.getElementById('pdf-logo-2').src = b64Watermark;
+                d.getElementById('pdf-sil-l').src = b64Silhouette;
+                d.getElementById('pdf-sil-r').src = b64Silhouette;
+                d.getElementById('pdf-elite-sil-l').src = b64SilhouetteElite;
+                d.getElementById('pdf-elite-sil-r').src = b64SilhouetteElite;
+
+                d.getElementById('pdf-atleta-p1').innerText = reportDataStore.atletaStringa;
+                d.getElementById('pdf-atleta-p2').innerText = reportDataStore.atletaStringa;
+                d.getElementById('pdf-data-p1').innerText = reportDataStore.dataFormattata;
+                d.getElementById('pdf-data-p2').innerText = reportDataStore.dataFormattata;
+
+                d.getElementById('pdf-bmr').innerText = reportDataStore.metrics.bmr;
+                d.getElementById('pdf-rmr').innerText = reportDataStore.metrics.rmr;
+                d.getElementById('pdf-tdee').innerText = reportDataStore.metrics.tdee;
+                d.getElementById('pdf-tdee-sett').innerText = reportDataStore.metrics.tdeeSett;
+                d.getElementById('pdf-gcc').innerText = reportDataStore.metrics.gcc;
+                d.getElementById('pdf-fm').innerText = reportDataStore.metrics.fm;
+                d.getElementById('pdf-ffm').innerText = reportDataStore.metrics.ffm;
+                d.getElementById('pdf-ibw').innerText = reportDataStore.metrics.ibw;
+                d.getElementById('pdf-kg-grasso').innerText = reportDataStore.metrics.kgGrasso;
+                d.getElementById('pdf-kg-magro').innerText = reportDataStore.metrics.kgMagro;
+                d.getElementById('pdf-totale-pliche').innerText = reportDataStore.metrics.totalePliche;
+                d.getElementById('pdf-peso-attuale').innerText = reportDataStore.metrics.pesoAttuale;
+                d.getElementById('pdf-label-pliche').innerText = (reportDataStore.sesso === 'M') ? "Plicometria totale (7 pliche):" : "Plicometria totale (3 pliche):";
+
+                d.getElementById('pdf-antropometria-rows').innerHTML = reportDataStore.rowsHtml;
+                d.getElementById('pdf-metodo').innerText = reportDataStore.sesso === 'M' ? 'Metodo: Jackson & Pollock / 7 pliche' : 'Metodo: Jackson & Pollock / 3 pliche';
+                d.getElementById('pdf-somma-totale').innerText = reportDataStore.haPliche ? reportDataStore.sommaPliche.toFixed(2).replace('.', ',') : '-';
+
+                const images = Array.from(d.querySelectorAll('img'));
+                await Promise.all(images.map(img => new Promise(resolve => {
+                    if (img.complete && img.naturalWidth > 0) resolve();
+                    else { img.onload = resolve; img.onerror = resolve; }
+                })));
+
+                await new Promise(r => setTimeout(r, 500));
+
+                btnText.innerText = "⏳ Generazione PDF...";
+
+                const { jsPDF } = window.jspdf;
+                const pdf = new jsPDF({ unit: 'mm', format: 'a4', orientation: 'portrait' });
+                const pagine = d.querySelectorAll('.page-a4');
+
+                for (let i = 0; i < pagine.length; i++) {
+                    const canvas = await html2canvas(pagine[i], {
+                        scale: 2,
+                        useCORS: true,
+                        allowTaint: true,
+                        backgroundColor: '#ffffff',
+                        logging: false,
+                        width: pagine[i].scrollWidth,
+                        height: pagine[i].scrollHeight
+                    });
+                    const imgData = canvas.toDataURL('image/jpeg', 0.98);
+                    if (i > 0) pdf.addPage();
+                    pdf.addImage(imgData, 'JPEG', 0, 0, 210, 297);
+                }
+
+                const nomeFile = "Composizione corporea e Fabbisogni energetici " + reportDataStore.dataFormattata;
+                pdf.save(nomeFile + '.pdf');
+
+                btn.disabled = false;
+                btn.classList.replace('bg-slate-400', 'bg-emerald-600');
+                btnText.innerText = "📥 Scarica PDF Pronto";
+                iframe.remove();
+
+            } catch (error) {
+                console.error("Errore logico:", error);
+                btn.disabled = false;
+                btn.classList.replace('bg-slate-400', 'bg-emerald-600');
+                btnText.innerText = "📥 Scarica PDF Pronto";
+                iframe.remove();
+            }
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            aggiornaInterfaccia();
+        });
     </script>
 </body>
 </html>
