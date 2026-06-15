@@ -191,7 +191,7 @@
             let haPliche = false;
             document.querySelectorAll('#cont-pliche input').forEach(input => {
                 const val = parseFloat(input.value) || 0;
-                pliccheMap[input.placeholder.split(' ')[0]] = val;
+                plicheMap[input.placeholder.split(' ')[0]] = val;
                 if (val > 0) haPliche = true;
             });
 
