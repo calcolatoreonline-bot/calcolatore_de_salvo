@@ -32,7 +32,7 @@ input, select {
   border:1px solid #cbd5e1; border-radius:6px;
   padding:9px 12px; font-size:14px; width:100%;
   background:#fff; color:#1e293b;
-  -webkit-appearance: none; /* Rimuove stili nativi mobile che sformano le celle */
+  -webkit-appearance: none;
 }
 input:focus, select:focus { outline:2px solid #2563eb; border-color:#2563eb; }
 
@@ -44,7 +44,9 @@ input:focus, select:focus { outline:2px solid #2563eb; border-color:#2563eb; }
 #btn-calcola:hover { background:#1d4ed8; }
 
 #btn-pdf {
-  display:none; margin:24px auto 20px; background:#059669; color:#fff;
+  display:none; 
+  margin:24px auto 24px; /* Spazio simmetrico ed elegante sopra e sotto */
+  background:#059669; color:#fff;
   border:none; border-radius:8px; padding:14px 40px; font-size:16px;
   font-weight:700; cursor:pointer; transition:background .2s;
   width: calc(100% - 32px); max-width: 400px;
@@ -55,7 +57,6 @@ input:focus, select:focus { outline:2px solid #2563eb; border-color:#2563eb; }
 /* ─── ANTEPRIMA ADATTIVA ─── */
 #preview-area { display:none; max-width:860px; margin:0 auto 40px; }
 
-/* Contenitore mobile che previene il taglio verticale a metà */
 .pg-container-mobile {
   width: 100%;
   overflow: hidden;
@@ -94,7 +95,7 @@ input:focus, select:focus { outline:2px solid #2563eb; border-color:#2563eb; }
   font-family:Arial,sans-serif;
 }
 
-/* ── HEADER (uguale P1 e P2) ── */
+/* ── HEADER ── */
 .hdr {
   width:644px;
   height:220px;
@@ -186,7 +187,6 @@ input:focus, select:focus { outline:2px solid #2563eb; border-color:#2563eb; }
   z-index:10;
 }
 
-/* Posizionamento assoluto e identico del Watermark fisso rispetto alla pagina A4 */
 .wmark {
   position:absolute;
   left:50%;
@@ -210,7 +210,7 @@ table.rt td {
   padding:6px 14px;
   font-size:13px;
   color:#1e293b;
-  background: transparent !important; /* Mantiene visibile il watermark sullo sfondo */
+  background: transparent !important;
 }
 table.rt td:first-child { text-align:left; }
 table.rt td:last-child  { text-align:center; font-weight:700; }
@@ -349,7 +349,7 @@ function gestisciAnteprimaMobile() {
     return;
   }
   
-  const larghezzaSchermo = window.innerWidth - 20; // 10px di margine per lato
+  const larghezzaSchermo = window.innerWidth - 20; 
   const fattoreScala = larghezzaSchermo / 794;
   const altezzaScalata = 1123 * fattoreScala;
 
@@ -573,19 +573,18 @@ function genera() {
 }
 
 /* ══════════════════════════════════════
-   SCARICA PDF (Blindato e Identico PC/Mobile)
+   SCARICA PDF
 ══════════════════════════════════════ */
 async function scaricaPDF() {
   const btn = document.getElementById('btn-pdf');
   btn.disabled = true;
   btn.textContent = '⏳ Generazione...';
 
-  // Salva gli stili di trasformazione correnti applicati per lo smartphone
   const wraps = document.querySelectorAll('.pg-wrap');
   const vecchieTrasformazioni = [];
   wraps.forEach(el => {
     vecchieTrasformazioni.push(el.style.transform);
-    el.style.transform = 'none'; // Forza le dimensioni reali A4 per lo scatto dell'html2canvas
+    el.style.transform = 'none'; 
   });
 
   try {
@@ -602,7 +601,7 @@ async function scaricaPDF() {
         logging: false,
         width:  794,
         height: 1123,
-        windowWidth:  794,  // Isola la Viewport della cattura escludendo lo schermo mobile
+        windowWidth:  794,  
         windowHeight: 1123,
       });
       const img = canvas.toDataURL('image/jpeg', 0.97);
@@ -620,7 +619,6 @@ async function scaricaPDF() {
     alert('Errore nella generazione del PDF.');
   }
 
-  // Ripristina l'anteprima scalata corretta per lo smartphone
   wraps.forEach((el, index) => {
     el.style.transform = vecchieTrasformazioni[index];
   });
