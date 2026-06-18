@@ -515,7 +515,7 @@ function genera() {
     const ibw = sesso === 'M'
       ? 50 + 2.3 * (hIn - 60)
       : 45.5 + 2.3 * (hIn - 60);
-    ibwV = Math.round(ibw) + " kg";
+    ibwV = (Math.round(ibw) - 2) + " - " + (Math.round(ibw) + 2) + " kg";
   }
 
   const nPliche = sesso === 'M' ? 7 : 5;
